@@ -1,24 +1,26 @@
-//THIS IS THE FILE UNDER GIT VERSION CONTROL
-
 BDIM flow;
 
-NACA foil;
-EllipseBody ellipse;
+NACA foil1;
+NACA foil2;
+EllipseD D;
 BodyUnion union;
 
 FloodPlot flood;
+FoilTest test;
 
 void setup(){
-  size(600,600);         // display window size
-  int n=(int)pow(2,6);   // number of grid points
+  size(800,800);         // display window size
+  int n=(int)pow(2,7);   // number of grid points
   float L = n/4.;        // length-scale in grid units
   Window view = new Window(n,n);
 
-  foil = new NACA(3*n/4,n/2,n/4,0.12,view);     // define geom
-  foil.rotate(PI/4);
-  ellipse = new EllipseBody(n/4,n/2,n/5,1,view);
-  ellipse.rotate(-PI/2);
-  union = new BodyUnion(ellipse,foil);
+  foil1 = new NACA(5*n/8,n/2,n/4,0.12,view);     // define geom
+  foil1.rotate(PI/4);
+  foil2 = new NACA(7*n/8,n/2,n/4,0.12,view);     // define geom
+  foil2.rotate(-PI/4);
+  D = new EllipseD(n/4,n/2,n/5,1,view);
+  D.rotate(-PI/2);
+  union = new BodyUnion(D, new BodyUnion(foil1,foil2));
   
   flow = new BDIM(n,n,1.5,union);             // solve for flow using BDIM
 //  flow = new BDIM(n,n,0.,foil,L/200,true);   // BDIM+QUICK
