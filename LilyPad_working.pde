@@ -2,40 +2,53 @@ BDIM flow;
 
 NACA foil1;
 NACA foil2;
-EllipseD D;
+//EllipseD D;
 BodyUnion union;
 
 FloodPlot flood;
-FoilTest test;
+//FoilTest test;
 
-  int n=(int)pow(2,7);   // number of grid points
-  float heaveAmp = n/4;
+//SaveData dat;
+
+int resolution = (int)pow(2,5), xLengths=5, yLengths=5, zoom = 3;    // choose the number of grid points per chord, the size of the domain in chord units and the zoom of the display
+
+  int n=resolution*xLengths;   // number of grid points x
+  int m=resolution*yLengths;   // number of grid points y
+  
+  int chord = n/5;
+  float heaveAmp = chord/2;
   float pitchAmp = PI/4;
   float omega = 2*PI*0.01;
   float t=0;
+  
+void settings(){
+  size(zoom*xLengths*resolution, zoom*yLengths*resolution); //display window size (used to be size(600,600); in setup. Setup only takes integers, not variables).
+}
 
 void setup(){
-  size(600,600);         // display window size
-  float L = n/4.;        // length-scale in grid units
-  Window view = new Window(n,n);
+  //float L = n/4.;        // length-scale in grid units
+  Window view = new Window(n,m);
 
-  D = new EllipseD(n/4,n/2,n/5,1,view); //////D
-  D.rotate(-PI/2);
+  //D = new EllipseD(n/4,n/2,n/5,1,view); //////D
+  //D.rotate(-PI/2);
 
-  foil1 = new NACA(5*n/10,n/2,n/5,0.12,view); //foil1
+  foil1 = new NACA(5*n/10,m/2,chord,0.12,view); //foil1
   foil1.rotate(0);
-  foil1.translate(0,-n/4);
-  foil2 = new NACA(8*n/10,n/2,n/5,0.12,view); //foil2
+  foil1.translate(0,-chord/2);
+  foil2 = new NACA(8*n/10,m/2,chord,0.12,view); //foil2
   foil2.rotate(PI/4);
   
   
-  union = new BodyUnion(D, new BodyUnion(foil1,foil2));
+  //union = new BodyUnion(D, new BodyUnion(foil1,foil2));
+  union = new BodyUnion(foil1,foil2);
   
   //flow = new BDIM(n,n,1.5,union);             // solve for flow using BDIM
-//  flow = new BDIM(n,n,0.,union,L/200,true);   // BDIM+QUICK
-  flow = new BDIM(n,n,0,union,0.001,false); // QUICK with adaptive time step
+//  flow = new BDIM(n,n,0.1.,union,L/200,true);   // BDIM+QUICK
+  flow = new BDIM(n,m,0,union,1/10000,false); // QUICK with adaptive time step
   flood = new FloodPlot(view);               // intialize...
   flood.setLegend("vorticity",-.5,.5);       // and label a flood plot
+  
+  //dat = new SaveData("pressuretest1.txt",test.foil1.fcoords,resolution,xLengths,yLengths,zoom);
 }
 void draw(){
   float velo1 = heaveAmp*omega*sin(omega*t);
@@ -50,6 +63,10 @@ void draw(){
   flow.update(union); flow.update2();         // 2-step fluid update
   flood.display(flow.u.vorticity());          // compute and display vorticity
   union.display();   // display the foil
+  
+  //dat.addData(flood.t, flood.flow.p);
+  //dat.finish();
+  
   t += flow.dt;
 }
 void mousePressed(){union.mousePressed();}    // user mouse...
