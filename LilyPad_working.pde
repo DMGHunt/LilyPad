@@ -10,7 +10,7 @@ FloodPlot flood;
 
 SaveData dat;
 
-int resolution = (int)pow(2,5), xLengths=8, yLengths=4, zoom = 3;    // choose the number of grid points per chord, the size of the domain in chord units and the zoom of the display
+int resolution = (int)pow(2,5), xLengths=8, yLengths=4, zoom = 4;    // choose the number of grid points per chord, the size of the domain in chord units and the zoom of the display
 
   int n=resolution*xLengths;   // number of grid points x
   int m=resolution*yLengths;   // number of grid points y
@@ -30,7 +30,7 @@ void setup(){
   //float L = n/4.;        // length-scale in grid units
   Window view = new Window(n,m);
 
-  D = new EllipseD(2*n/10,m/2,n/10,1,view); //////D
+  D = new EllipseD(2*n/10,m/2,n/20,1,view); //////D
   D.rotate(-PI/2);
 
   foil1 = new NACA(5*n/10,m/2,chord,0.12,view); //foil1
@@ -47,10 +47,10 @@ void setup(){
 //  flow = new BDIM(n,n,0.1.,union,L/200,true);   // BDIM+QUICK
   flow = new BDIM(n,m,0,union,(float) resolution/Re,false); // QUICK with adaptive time step
   flood = new FloodPlot(view);               // intialize...
-  flood.range = new Scale(-0.5,0.5);
-  flood.setLegend("pressure");
-
-  //dat = new SaveData("pressuretest1.txt",flood.foil1.coords,resolution,xLengths,yLengths,zoom);
+  flood = new FloodPlot(view);               // intialize...
+  flood.setLegend("vorticity",-.5,.5);       // and label a flood plot
+  
+  //dat = new SaveData("pressuretest1.txt",test.foil1.fcoords,resolution,xLengths,yLengths,zoom);
 }
 void draw(){
   float velo1 = heaveAmp*omega*sin(omega*t);
@@ -61,12 +61,10 @@ void draw(){
   foil1.rotate(spin1);
   float spin2 = /*atan2(velo,1.)-foil1.phi*/-pitchAmp*omega*sin(omega*t); //I added external omega - purely sinusoidal
   foil2.rotate(spin2);
-  
   union.update();  // update the foil
-  flow.update(union); 
-  flow.update2();         // 2-step fluid update
+  flow.update(union); flow.update2();         // 2-step fluid update
+  flood.display(flow.u.vorticity());          // compute and display vorticity
   union.display();   // display the foil
-  flood.display(flow.u.vorticity());          // compute and display vorticity 
   
   //dat.addData(flood.t, flood.flow.p);
   //dat.finish();
