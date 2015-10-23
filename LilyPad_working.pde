@@ -10,17 +10,19 @@ FloodPlot flood;
 
 SaveData dat;
 
-int resolution = (int)pow(2,5), xLengths=8, yLengths=4, zoom = 4;    // choose the number of grid points per chord, the size of the domain in chord units and the zoom of the display
+int resolution = (int)pow(2,4), xLengths=12, yLengths=5, zoom = 3;    // choose the number of grid points per chord, the size of the domain in chord units and the zoom of the display/
 
   int n=resolution*xLengths;   // number of grid points x
   int m=resolution*yLengths;   // number of grid points y
   
-  int chord = n/8;
+  int chord = n/10;
   float heaveAmp = chord/2;
-  float pitchAmp = PI/4;
-  float omega = 2*PI*0.01;
+  float pitchAmp = PI/1000000; //whaaaaaaaaattt...?
   float t=0;
-  int Re=500000;
+  int Re=5000;
+  float St = 0.2;
+  float omega = 2*PI*0.01;
+  //float omega = 2*PI*St*chord; 
   
 void settings(){
   size(zoom*xLengths*resolution, zoom*yLengths*resolution); //display window size (used to be size(600,600); in setup. Setup only takes integers, not variables).
@@ -33,22 +35,25 @@ void setup(){
   D = new EllipseD(2*n/10,m/2,n/20,1,view); //////D
   D.rotate(-PI/2);
 
-  foil1 = new NACA(5*n/10,m/2,chord,0.12,view); //foil1
+  foil1 = new NACA(3*n/10,m/2,chord,0.12,view); //foil1
   foil1.rotate(0);
   foil1.translate(0,-chord/2);
-  foil2 = new NACA(8*n/10,m/2,chord,0.12,view); //foil2
-  foil2.rotate(PI/4);
+  foil2 = new NACA(7*n/10,m/2,chord,0.12,view); //foil2
+  foil2.rotate(pitchAmp);
   
   
-  union = new BodyUnion(D, new BodyUnion(foil1,foil2));
-  //union = new BodyUnion(foil1,foil2);
+  //union = new BodyUnion(D, new BodyUnion(foil1,foil2));
+  union = new BodyUnion(foil1,foil2); 
   
+  println((float) chord/Re);
   //flow = new BDIM(n,n,1.5,union);             // solve for flow using BDIM
 //  flow = new BDIM(n,n,0.1.,union,L/200,true);   // BDIM+QUICK
-  flow = new BDIM(n,m,0,union,(float) resolution/Re,false); // QUICK with adaptive time step
+  flow = new BDIM(n,m,0.1,union,(float) chord/Re,false); // QUICK with adaptive time step
+  
   flood = new FloodPlot(view);               // intialize...
   flood = new FloodPlot(view);               // intialize...
   flood.setLegend("vorticity",-.5,.5);       // and label a flood plot
+  flood.setColorMode(2);
   
   //dat = new SaveData("pressuretest1.txt",test.foil1.fcoords,resolution,xLengths,yLengths,zoom);
 }
@@ -57,13 +62,14 @@ void draw(){
   foil1.translate(0,velo1*flow.dt);
   float velo2 = heaveAmp*omega*sin(omega*t-PI/2);
   foil2.translate(0,velo2*flow.dt);
-  float spin1 = /*atan2(velo,1.)-foil1.phi*/-pitchAmp*omega*sin(omega*t+PI/2); //I added external omega - purely sinusoidal
+  //float spin1 = atan2(velo1,1.)-foil1.phi;//-pitchAmp*sin(omega*t+PI/2); //I added external omega - purely sinusoidal
+  float spin1 = pitchAmp*sin(omega*t)-foil1.phi-atan2(velo1,1.);
   foil1.rotate(spin1);
-  float spin2 = /*atan2(velo,1.)-foil1.phi*/-pitchAmp*omega*sin(omega*t); //I added external omega - purely sinusoidal
+  float spin2 = pitchAmp*sin(omega*t-PI/2)-foil2.phi-atan2(velo2,1.);
   foil2.rotate(spin2);
   union.update();  // update the foil
   flow.update(union); flow.update2();         // 2-step fluid update
-  flood.display(flow.u.vorticity());          // compute and display vorticity
+  flood.display(flow.u.vorticity());          // compute and display vorticity flow.p flow.u.vorticity()
   union.display();   // display the foil
   
   //dat.addData(flood.t, flood.flow.p);
