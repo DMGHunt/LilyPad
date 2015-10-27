@@ -3,11 +3,12 @@ FreeBody test;
 Body body;
 
 //INPUT PARAMETERS_______________________________________________________________________
-int resolution = 16;               // number of grid points spanning radius of vortex
+int resolution = (int)pow(2,4);              // number of grid points spanning radius of vortex
 int xLengths = 12;                // (streamwise length of computational domain)/(resolution)
 int yLengths = 8;                 // (transverse length of computational domain)/(resolution)
-int area = 300000;                // window view area
-int Re = 1000;                     // Reynolds number
+int zoom=5;
+int area = 600000;                // window view area
+int Re = 100000;                   // Reynolds number
 float mr = 2;                     // mass ratio = (body mass)/(mass of displaced fluid)
 //_______________________________________________________________________________________
 
@@ -15,11 +16,14 @@ void settings(){
   // set window view area 
   float s = sqrt(area*xLengths/yLengths);
   size((int)s, (int)s*yLengths/xLengths);
+  size(zoom*xLengths*resolution, zoom*yLengths*resolution); //display window size (used to be size(600,600); in setup. Setup only takes integers, not variables).
 }
+
 void setup() {
   // create FreeCylinder object
   test = new FreeBody(resolution, Re, xLengths, yLengths, mr);
-    
+  //body.rotate(PI/4);
+  
 }
 
 void draw() {
@@ -34,9 +38,11 @@ class FreeBody {
   BDIM flow;
   boolean QUICK = true, order2 = true;
   int n, m, resolution;
-  Body body;
+  Body body1;
+  Body body2;
   Body EllipseD;
   BodyUnion union;
+  ParticlePlot plot;
   FloodPlot flood;
   float dt=1, dto=1, D, mr;
   PVector force;
@@ -49,20 +55,28 @@ class FreeBody {
     Window view = new Window( n, m);
     D = resolution;
     
-    body = new NACA(.5*n, .5*m, D, 0.12, view);
-    body.mass = mr*body.area;
+    body1 = new NACA(2*n/10, m/2, D, 0.12, view);
+    body1.mass = mr*body1.area;
     //body.rotate(PI/8);
     
-    EllipseD = new EllipseD(2*n/10,m/2,n/20,1,view);
+    body2 = new NACA(5*n/10, m/2, D, 0.12, view);
+    body2.mass = mr*body2.area;
+    //body.rotate(PI/8);
+    
+    EllipseD = new EllipseD(n/10,m/2,n/20,1,view);
     EllipseD.rotate(-PI/2);
     
-    union = new BodyUnion(EllipseD, body);
+    union = new BodyUnion(EllipseD, new BodyUnion( body1, body2));
     
     flow = new BDIM(n, m, 0, union, (float)D/Re, QUICK);
 
     flood = new FloodPlot(view); 
     flood.range = new Scale(-.5, .5);
     flood.setLegend("vorticity");
+    
+    plot = new ParticlePlot( view, 10000 );
+    plot.setColorMode(4);
+    plot.setLegend("Vorticity",-0.5,0.5);
   }
 
   void update() {
@@ -76,9 +90,13 @@ class FreeBody {
     }
     
     // translate body according to pressure force, previous dt, current dt
-    PVector forceP = body.pressForce(flow.p);
-    float momentP = body.pressMoment(flow.p);
-    body.react(forceP, momentP, dto, dt);
+    PVector force1 = body1.pressForce(flow.p);
+    float moment1 = body1.pressMoment(flow.p);
+    body1.react(force1, moment1, dto, dt);
+    
+    PVector force2 = body2.pressForce(flow.p);
+    float moment2 = body2.pressMoment(flow.p);
+    body2.react(force2, moment2, dto, dt);
     
     union.update();
     flow.update(union);
@@ -90,6 +108,8 @@ class FreeBody {
   void display() {
     flood.display(flow.u.vorticity());
     union.display();
+    plot.update(flow); // !NOTE!
+    plot.display(flow.u.vorticity());
   }
 }
 
