@@ -1,3 +1,98 @@
+/*
+FreeBody test;
+Body body;
+
+//INPUT PARAMETERS_______________________________________________________________________
+int resolution = 16;               // number of grid points spanning radius of vortex
+int xLengths = 12;                // (streamwise length of computational domain)/(resolution)
+int yLengths = 8;                 // (transverse length of computational domain)/(resolution)
+int area = 300000;                // window view area
+int Re = 100;                     // Reynolds number
+float mr = 2;                     // mass ratio = (body mass)/(mass of displaced fluid)
+//_______________________________________________________________________________________
+
+void settings(){
+  // set window view area 
+  float s = sqrt(area*xLengths/yLengths);
+  size((int)s, (int)s*yLengths/xLengths);
+}
+void setup() {
+  // create FreeCylinder object
+  test = new FreeBody(resolution, Re, xLengths, yLengths, mr);
+    
+}
+
+void draw() {
+  test.update(); 
+  test.display();
+}
+
+void keyPressed(){exit();}
+*/
+
+class FreeBody {
+  BDIM flow;
+  boolean QUICK = true, order2 = true;
+  int n, m, resolution;
+  Body body;
+  Body EllipseD;
+  BodyUnion union;
+  FloodPlot flood;
+  float dt=1, dto=1, D, mr;
+  PVector force;
+
+  FreeBody(int resolution, int Re, int xLengths, int yLengths, float mr) {
+    this.resolution = resolution;
+    this.mr = mr;
+    n=xLengths*resolution;
+    m=yLengths*resolution;
+    Window view = new Window(0, 0, n, m);
+    D = resolution;
+    
+    body = new NACA(.5*n, .5*m, D, 0.12, view);
+    body.mass = mr*body.area;
+    //body.rotate(PI/4);
+    
+    EllipseD = new EllipseD(2*n/10,m/2,n/10,1,view);
+    EllipseD.rotate(-PI/2);
+    
+    union = new BodyUnion(EllipseD, body);
+    
+    flow = new BDIM(n, m, 0, union, (float)D/Re, QUICK);
+
+    flood = new FloodPlot(view); 
+    flood.range = new Scale(-.5, .5);
+    flood.setLegend("vorticity");
+  }
+
+  void update() {
+    //body.translate(0,0.1);
+    // save previous time step duration
+    dto = dt;
+    // calculate next time step duration
+    if (QUICK) {
+      dt = flow.checkCFL();
+      flow.dt = dt;
+    }
+    
+    // translate body according to pressure force, previous dt, current dt
+    PVector forceP = body.pressForce(flow.p);
+    float momentP = body.pressMoment(flow.p);
+    body.react(forceP, momentP, dto, dt);
+    
+    union.update();
+    flow.update(union);
+    if (order2) {
+      flow.update2();
+    }
+  }
+
+  void display() {
+    flood.display(flow.u.vorticity());
+    union.display();
+  }
+}
+
 /********************************
 EllipseD
  ********************************/
