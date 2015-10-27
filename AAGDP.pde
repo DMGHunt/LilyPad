@@ -7,7 +7,7 @@ int resolution = 16;               // number of grid points spanning radius of v
 int xLengths = 12;                // (streamwise length of computational domain)/(resolution)
 int yLengths = 8;                 // (transverse length of computational domain)/(resolution)
 int area = 300000;                // window view area
-int Re = 100;                     // Reynolds number
+int Re = 1000;                     // Reynolds number
 float mr = 2;                     // mass ratio = (body mass)/(mass of displaced fluid)
 //_______________________________________________________________________________________
 
@@ -46,14 +46,14 @@ class FreeBody {
     this.mr = mr;
     n=xLengths*resolution;
     m=yLengths*resolution;
-    Window view = new Window(0, 0, n, m);
+    Window view = new Window( n, m);
     D = resolution;
     
     body = new NACA(.5*n, .5*m, D, 0.12, view);
     body.mass = mr*body.area;
-    //body.rotate(PI/4);
+    //body.rotate(PI/8);
     
-    EllipseD = new EllipseD(2*n/10,m/2,n/10,1,view);
+    EllipseD = new EllipseD(2*n/10,m/2,n/20,1,view);
     EllipseD.rotate(-PI/2);
     
     union = new BodyUnion(EllipseD, body);
