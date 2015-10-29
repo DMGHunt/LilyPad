@@ -44,7 +44,7 @@ class FreeBody {
   BodyUnion union;
   ParticlePlot plot;
   FloodPlot flood;
-  float dt=1, dto=1, D, mr;
+  float t=0, dt=1, dto=1, D, mr;
   PVector force;
 
   FreeBody(int resolution, int Re, int xLengths, int yLengths, float mr) {
@@ -55,7 +55,7 @@ class FreeBody {
     Window view = new Window( n, m);
     D = resolution;
     
-    body1 = new NACA(2*n/10, m/2, D, 0.12, view);
+    body1 = new NACA(2*n/10, m/2, D, 0.12, 0.25, view);
     body1.mass = mr*body1.area;
     //body.rotate(PI/8);
     
@@ -83,6 +83,7 @@ class FreeBody {
     //body.translate(0,0.1);
     // save previous time step duration
     dto = dt;
+    t+=dt;
     // calculate next time step duration
     if (QUICK) {
       dt = flow.checkCFL();
@@ -98,11 +99,20 @@ class FreeBody {
     float moment2 = body2.pressMoment(flow.p);
     body2.react(force2, moment2, dto, dt);
     
+    if(body1.phi>=PI/100){
+      body1.rotate(0);
+    }
+    else if(body1.phi<=-PI/100){
+      body1.rotate(0);
+    }
+    
     union.update();
     flow.update(union);
     if (order2) {
       flow.update2();
     }
+    
+    println("PHI = ",body1.phi);
   }
 
   void display() {
