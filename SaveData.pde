@@ -20,6 +20,7 @@ class SaveData{
     this.coords = coords;
     n = coords.size();
     output.println("%% Pressure distribution along the foil using processing viscous simulation");
+    
     output.print("% xcoord = [");
     for(int i=0; i<n; i++){
       output.print(coords.get(i).x +" ");
@@ -42,6 +43,11 @@ class SaveData{
   void saveParam(String name, float value){
     output.println("% " + name + " = " + value + ";");
   }
+  
+  void saveFloat(float value){ //NEW
+    output.println(value);
+  }
+  
   void saveString(String s){
     output.println(s);
   }

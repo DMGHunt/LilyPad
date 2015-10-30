@@ -44,8 +44,8 @@ class FreeBody {
   BodyUnion union;
   ParticlePlot plot;
   FloodPlot flood;
-  float t=0, dt=1, dto=1, D, mr;
-  PVector force;
+  float t=0, dt=1, dto=1, chord, mr, PureAOA, Top_side, Bottom_side;
+  PVector force, Top_limit, Bottom_limit, LE, TE; //Top_limit = point of downward force, Bottom_limit is upward
 
   FreeBody(int resolution, int Re, int xLengths, int yLengths, float mr) {
     this.resolution = resolution;
@@ -53,13 +53,13 @@ class FreeBody {
     n=xLengths*resolution;
     m=yLengths*resolution;
     Window view = new Window( n, m);
-    D = resolution;
+    chord = resolution;
     
-    body1 = new NACA(2*n/10, m/2, D, 0.12, 0.25, view);
+    body1 = new NACA(2.5*n/10, m/2, chord, 0.12, 0.3, view);
     body1.mass = mr*body1.area;
     //body.rotate(PI/8);
     
-    body2 = new NACA(5*n/10, m/2, D, 0.12, view);
+    body2 = new NACA(5*n/10, m/2, chord, 0.12, 0.3, view);
     body2.mass = mr*body2.area;
     //body.rotate(PI/8);
     
@@ -68,7 +68,7 @@ class FreeBody {
     
     union = new BodyUnion(EllipseD, new BodyUnion( body1, body2));
     
-    flow = new BDIM(n, m, 0, union, (float)D/Re, QUICK);
+    flow = new BDIM(n, m, 0, union, (float)chord/Re, QUICK);
 
     flood = new FloodPlot(view); 
     flood.range = new Scale(-.5, .5);
@@ -90,7 +90,7 @@ class FreeBody {
       flow.dt = dt;
     }
     
-    // translate body according to pressure force, previous dt, current dt
+    /* Translate bodes according to pressure force, previous dt, current dt----------------------------------------------------------------------------------------------------------*/
     PVector force1 = body1.pressForce(flow.p);
     float moment1 = body1.pressMoment(flow.p);
     body1.react(force1, moment1, dto, dt);
@@ -99,12 +99,49 @@ class FreeBody {
     float moment2 = body2.pressMoment(flow.p);
     body2.react(force2, moment2, dto, dt);
     
-    if(body1.phi>=PI/100){
+    /*Control of free pitch and max/min conditions-----------------------------------------------------------------------------------------------------------------------------------*/
+    
+    //println(test.body1.coords.get(0)); //Get PVector 1 of coordinates arraylist (x1,y1,z1) ie leading edge coords
+    //println(test.body1.coords.get(0).x); //Get x component of PVector
+    //println(test.body1.coords.get(100)); //There are 200 points total (counted from saved file see SaveData)
+    //println(test.body1.coords.get(100).x);
+    
+    PureAOA = atan((test.body1.coords.get(100).y-test.body1.coords.get(0).y)/(test.body1.coords.get(100).x-test.body1.coords.get(0).x));
+    //println("PureAOA = ",PureAOA);
+    //println("PHI = ",body1.phi);
+    
+    LE = test.body1.coords.get(0); //Leading Edge coords
+    TE = test.body1.coords.get(100); //Trailing Edge coords
+    Top_limit = new PVector(34.5,64.0-chord/2,0); //Neutral is (34.0,64.0,0) for initial setup. Smaller is up, larger is down. Amplitude: chord/2
+    Bottom_limit = new PVector(34.5,64.0+chord/2,0); //Neutral is (34.0,64.0,0) for initial setup. Smaller is up, larger is down. Amplitude: chord/2
+    
+    Top_side = (TE.x-LE.x)*(Top_limit.y-LE.y)-(TE.y-LE.y)*(Top_limit.x-LE.x); //Technique from http://www.gamedev.net/topic/542870-determine-which-side-of-a-line-a-point-is/
+    Bottom_side = (TE.x-LE.x)*(Bottom_limit.y-LE.y)-(TE.y-LE.y)*(Bottom_limit.x-LE.x); //It finds out which side of the foil the turning point is on. Top: -ve is under. Bottom: +ve is over.
+    
+    //println("Velo = ",body1.dxc.y); //vertical velocity of body
+    
+    //println("Spin = ",body1.dphi); //rotational velocity of body
+    
+    if(Top_side>=1){
+      body1.translate(0,body1.dxc.y*sin(0.1*t)); //NEED TO HOLD INITIAL VALUE
+      body1.rotate(-PureAOA*0.1*sin(0.1*t)); //NEED TO HOLD INITIAL VALUE - or derive inertial properties about pivot with external moment added etc
+    }
+    else if(Bottom_side<=1){
+      body1.translate(0,0); //STOP - arbitrary
+      body1.rotate(0.01); //small corrective rotation - arbitrary
+    }
+      
+    //println("TS = ",Top_side);
+    //println("BS = ",Bottom_side);
+    
+    if(PureAOA>=PI/4){
       body1.rotate(0);
     }
-    else if(body1.phi<=-PI/100){
+    else if(PureAOA<=-PI/4){
       body1.rotate(0);
     }
+    
+    //if(position of centroid
     
     union.update();
     flow.update(union);
@@ -112,7 +149,7 @@ class FreeBody {
       flow.update2();
     }
     
-    println("PHI = ",body1.phi);
+    //println("PHI = ",body1.phi);
   }
 
   void display() {

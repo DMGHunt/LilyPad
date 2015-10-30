@@ -32,7 +32,7 @@ void setup() {
 void draw() {
   test.update(); 
   test.display();
-  phi1Save.saveFloat(test.body1.phi);
+  phi1Save.saveFloat(test.PureAOA);
   dat.addData(test.t, test.flow.p);
   dat.finish();
 }
