@@ -21,7 +21,7 @@ class SaveData{
     n = coords.size();
     output.println("%% Pressure distribution along the foil using processing viscous simulation");
     
-    output.print("% xcoord = [");
+    /*output.print("% xcoord = [");
     for(int i=0; i<n; i++){
       output.print(coords.get(i).x +" ");
     }
@@ -30,6 +30,11 @@ class SaveData{
     output.print("% ycoord = [");
     for(int i=0; i<n; i++){
       output.print(coords.get(i).y +" ");
+    }*/
+    output.println("Foil Coordinates PVector [x,y,z] :"); 
+    for(int i=0; i<n; i++){ 
+      //output.println(coords.get(i).x + " " + coords.get(i).y);
+      output.println(coords.get(i));
     }
     output.println("];");
   
