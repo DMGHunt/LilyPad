@@ -53,6 +53,10 @@ class SaveData{
     output.println(value);
   }
   
+  void savePVector(PVector xyz){ //NEW
+    output.println(xyz);
+  }
+  
   void saveString(String s){
     output.println(s);
   }

@@ -44,8 +44,8 @@ class FreeBody {
   BodyUnion union;
   ParticlePlot plot;
   FloodPlot flood;
-  float t=0, dt=1, dto=1, chord, mr, PureAOA, Top_side, Bottom_side, pivot=0.25, pivotx;
-  PVector force, Top_limit, Bottom_limit, LE, TE, pivot_coords; //Top_limit = point of downward force, Bottom_limit is upward
+  float t=0, dt=1, dto=1, chord, mr, PureAOA, Top_side, Bottom_side, pivot=0.25, pivotx, moment1, moment2;
+  PVector force1, force2, Top_limit, Bottom_limit, LE, TE, pivot_coords; //Top_limit = point of downward force, Bottom_limit is upward
 
   FreeBody(int resolution, int Re, int xLengths, int yLengths, float mr) {
     this.resolution = resolution;
@@ -121,14 +121,13 @@ class FreeBody {
     }
     else{
     /* Translate bodes according to pressure force, previous dt, current dt----------------------------------------------------------------------------------------------------------*/
-    PVector force1 = body1.pressForce(flow.p);
-    float moment1 = body1.pressMoment(flow.p);
+    force1 = body1.pressForce(flow.p);
+    moment1 = body1.pressMoment(flow.p);
     body1.react(force1, moment1, dto, dt);
-    
-    PVector force2 = body2.pressForce(flow.p);
-    float moment2 = body2.pressMoment(flow.p);
-    body2.react(force2, moment2, dto, dt);
     }
+    force2 = body2.pressForce(flow.p);
+    moment2 = body2.pressMoment(flow.p);
+    body2.react(force2, moment2, dto, dt);
     
     //println("PureAOA = ",PureAOA);
     //println("PHI = ",body1.phi);

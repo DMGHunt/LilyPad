@@ -120,7 +120,7 @@ class Body {
       t -= (sq(x1)+x1*x2+sq(x2)+sq(y1)+y1*y2+sq(y2))*da;
     }
     area = 0.5*s;
-    I0 = t/12.;
+    I0 = t/12.; //////////////////////////////////////IS THIS RIGHT?////////////////////////////
     mass = area; // default unit density
   }
  
