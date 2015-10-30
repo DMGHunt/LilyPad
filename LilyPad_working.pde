@@ -34,7 +34,7 @@ void draw() {
   test.display();
   phi1Save.saveFloat(test.PureAOA);
   dat.addData(test.t, test.flow.p);
-  dat.finish();
+  //dat.finish();
 }
 
 void keyPressed(){exit();}
