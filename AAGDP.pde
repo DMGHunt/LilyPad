@@ -90,37 +90,17 @@ class FreeBody {
       flow.dt = dt;
     }
     
-    /* Translate bodes according to pressure force, previous dt, current dt----------------------------------------------------------------------------------------------------------*/
-    PVector force1 = body1.pressForce(flow.p);
-    float moment1 = body1.pressMoment(flow.p);
-    body1.react(force1, moment1, dto, dt);
-    
-    PVector force2 = body2.pressForce(flow.p);
-    float moment2 = body2.pressMoment(flow.p);
-    body2.react(force2, moment2, dto, dt);
+
     
     /*Control of free pitch and max/min conditions-----------------------------------------------------------------------------------------------------------------------------------*/
-    
-    //println(test.body1.coords.get(0)); //Get PVector 1 of coordinates arraylist (x1,y1,z1) ie leading edge coords
-    //println(test.body1.coords.get(0).x); //Get x component of PVector
-    //println(test.body1.coords.get(100)); //There are 200 points total (counted from saved file see SaveData)
-    //println(test.body1.coords.get(100).x);
-    
-    PureAOA = atan((test.body1.coords.get(100).y-test.body1.coords.get(0).y)/(test.body1.coords.get(100).x-test.body1.coords.get(0).x));
-    //println("PureAOA = ",PureAOA);
-    //println("PHI = ",body1.phi);
     
     LE = test.body1.coords.get(0); //Leading Edge coords
     TE = test.body1.coords.get(100); //Trailing Edge coords
     Top_limit = new PVector(34.5,64.0-chord/2,0); //Neutral is (34.0,64.0,0) for initial setup. Smaller is up, larger is down. Amplitude: chord/2
     Bottom_limit = new PVector(34.5,64.0+chord/2,0); //Neutral is (34.0,64.0,0) for initial setup. Smaller is up, larger is down. Amplitude: chord/2
-    
     Top_side = (TE.x-LE.x)*(Top_limit.y-LE.y)-(TE.y-LE.y)*(Top_limit.x-LE.x); //Technique from http://www.gamedev.net/topic/542870-determine-which-side-of-a-line-a-point-is/
     Bottom_side = (TE.x-LE.x)*(Bottom_limit.y-LE.y)-(TE.y-LE.y)*(Bottom_limit.x-LE.x); //It finds out which side of the foil the turning point is on. Top: -ve is under. Bottom: +ve is over.
-    
-    //println("Velo = ",body1.dxc.y); //vertical velocity of body
-    
-    //println("Spin = ",body1.dphi); //rotational velocity of body
+    PureAOA = atan((test.body1.coords.get(100).y-test.body1.coords.get(0).y)/(test.body1.coords.get(100).x-test.body1.coords.get(0).x));
     
     if(Top_side>=1){
       body1.translate(0,body1.dxc.y*sin(0.1*t)); //NEED TO HOLD INITIAL VALUE
@@ -130,26 +110,38 @@ class FreeBody {
       body1.translate(0,0); //STOP - arbitrary
       body1.rotate(0.01); //small corrective rotation - arbitrary
     }
-      
-    //println("TS = ",Top_side);
-    //println("BS = ",Bottom_side);
-    
-    if(PureAOA>=PI/4){
+    else if(PureAOA>=PI/4){
       body1.rotate(0);
     }
     else if(PureAOA<=-PI/4){
       body1.rotate(0);
     }
+    else{
+    /* Translate bodes according to pressure force, previous dt, current dt----------------------------------------------------------------------------------------------------------*/
+    PVector force1 = body1.pressForce(flow.p);
+    float moment1 = body1.pressMoment(flow.p);
+    body1.react(force1, moment1, dto, dt);
+    
+    PVector force2 = body2.pressForce(flow.p);
+    float moment2 = body2.pressMoment(flow.p);
+    body2.react(force2, moment2, dto, dt);
+    }
+    
+    //println("PureAOA = ",PureAOA);
+    //println("PHI = ",body1.phi);
+    //println("Velo = ",body1.dxc.y); //vertical velocity of body
+    //println("Spin = ",body1.dphi); //rotational velocity of body
+    //println(test.body1.coords.get(0)); //Get PVector 1 of coordinates arraylist (x1,y1,z1) ie leading edge coords
+    //println(test.body1.coords.get(0).x); //Get x component of PVector
+    //println(test.body1.coords.get(100)); //There are 200 points total (counted from saved file see SaveData)
+    //println(test.body1.coords.get(100).x);
     
     //if(position of centroid
-    
     union.update();
     flow.update(union);
     if (order2) {
       flow.update2();
     }
-    
-    //println("PHI = ",body1.phi);
   }
 
   void display() {
