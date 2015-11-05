@@ -105,6 +105,8 @@ class FreeBody {
     Bottom_side = (TE.x-LE.x)*(Bottom_limit.y-LE.y)-(TE.y-LE.y)*(Bottom_limit.x-LE.x); //It finds out which side of the foil the turning point is on. Top: -ve is under. Bottom: +ve is over.
     PureAOA = atan((test.body1.coords.get(100).y-test.body1.coords.get(0).y)/(test.body1.coords.get(100).x-test.body1.coords.get(0).x));
     
+    /*Body 1 Movement Control*/
+    
     if(Top_side>=1){
       body1.translate(0,body1.dxc.y*sin(0.1*t)); //NEED TO HOLD INITIAL VALUE
       body1.rotate(-PureAOA*0.1*sin(0.1*t)); //NEED TO HOLD INITIAL VALUE - or derive inertial properties about pivot with external moment added etc
@@ -120,14 +122,16 @@ class FreeBody {
       body1.rotate(0);
     }
     else{
-    /* Translate bodes according to pressure force, previous dt, current dt----------------------------------------------------------------------------------------------------------*/
     force1 = body1.pressForce(flow.p);
     moment1 = body1.pressMoment(flow.p);
-    body1.react(force1, moment1, dto, dt);
+    body1.react(force1, moment1, dto, dt); /* Translate bodes according to pressure force, previous dt, current dt*/
     }
+    
+    /*Body 2 Movement Control*/
+    
     force2 = body2.pressForce(flow.p);
     moment2 = body2.pressMoment(flow.p);
-    body2.react(force2, moment2, dto, dt);
+    body2.react(force2, moment2, dto, dt); /* Translate bodes according to pressure force, previous dt, current dt*/
     
     //println("PureAOA = ",PureAOA);
     //println("PHI = ",body1.phi);

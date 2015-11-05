@@ -12,8 +12,8 @@ int resolution = (int)pow(2,4);              // number of grid points spanning r
 int xLengths = 12;                // (streamwise length of computational domain)/(resolution)
 int yLengths = 8;                 // (transverse length of computational domain)/(resolution)
 int zoom=5;
-int area = 600000;                // window view area
-int Re = 10000;                   // Reynolds number
+int area = 60000;                // window view area
+int Re = 242718;                   // Reynolds number from Excel
 //////float St = 0.2;
 float mr = 2;                     // mass ratio = (body mass)/(mass of displaced fluid)
 //_______________________________________________________________________________________
@@ -50,6 +50,7 @@ void draw() {
   saveForce_1y.saveFloat(test.force1.y);
   saveForce_1xy.savePVector(test.force1);
   saveMoment_1.saveFloat(test.moment1);
+  //println(VectorField flow.rhoi);
   
   //dat.finish();
 }
