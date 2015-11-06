@@ -2,7 +2,7 @@
 FreeBody test;
 Body body;
 
-//INPUT PARAMETERS_______________________________________________________________________
+//INPUT PARAMETEdge1RS_______________________________________________________________________
 int resolution = (int)pow(2,4);              // number of grid points spanning radius of vortex
 int xLengths = 12;                // (streamwise length of computational domain)/(resolution)
 int yLengths = 8;                 // (transverse length of computational domain)/(resolution)
@@ -33,7 +33,7 @@ void draw() {
 
 void keyPressed(){exit();}
 */
-
+/*----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 class FreeBody {
   BDIM flow;
   boolean QUICK = true, order2 = true;
@@ -44,9 +44,22 @@ class FreeBody {
   BodyUnion union;
   ParticlePlot plot;
   FloodPlot flood;
-  float t=0, dt=1, dto=1, chord, mr, PureAOA, Top_side, Bottom_side, pivot=0.25, pivotx, moment1, moment2;
-  PVector force1, force2, Top_limit, Bottom_limit, LE, TE, pivot_coords; //Top_limit = point of downward force, Bottom_limit is upward
-
+  float t=0, dt=1, dto=1, chord, mr, pivot=0.3;
+  
+  
+  PVector Top_limit1, Bottom_limit1, LEdge1, TEdge1; //Top_limit1 = point of downward force, Bottom_limit1 is upward
+  PVector Top_limit2, Bottom_limit2, LEdge2, TEdge2; //Top_limit1 = point of downward force, Bottom_limit1 is upward
+  float pure_AOA1, too_high1, too_low1, pivotx1;
+  float pure_AOA2, too_high2, too_low2, pivotx2;
+  boolean limit_broken1=false; //set to false in setup
+  boolean limit_broken2=false;
+  float hold_vel1, hold_AOA1;
+  float hold_vel2, hold_AOA2;
+  float omega=0.07, t1, t2; //omega set dep dxc.y??
+  
+  PVector force1, force2; 
+  float moment1, moment2;
+/*----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
   FreeBody(int resolution, int Re, int xLengths, int yLengths, float mr) {
     this.resolution = resolution;
     this.mr = mr;
@@ -56,17 +69,18 @@ class FreeBody {
     chord = resolution;
     
     body1 = new NACA(2.5*n/10, m/2, chord, 0.12, pivot, view);
-    body1.mass = mr*body1.area;
-    //body.rotate(PI/8);
+    body1.mass = mr*body1.area; //INERTIA = t/12. or 1??????????????????????/
+    //body1.rotate(PI/8);
     
     body2 = new NACA(5*n/10, m/2, chord, 0.12, pivot, view);
-    body2.mass = mr*body2.area;
-    //body.rotate(PI/8);
+    body2.mass = mr*body2.area; //INERTIA = t/12. or 1??????????????????????/
+    //body2.rotate(PI/8);
     
-    EllipseD = new EllipseD(n/10,m/2,n/20,1,view);
-    EllipseD.rotate(-PI/2);
+    //EllipseD = new EllipseD(n/10,m/2,n/20,1,view);
+    //EllipseD.rotate(-PI/2);
     
-    union = new BodyUnion(EllipseD, new BodyUnion( body1, body2));
+    //union = new BodyUnion(EllipseD, new BodyUnion( body1, body2));
+    union = new BodyUnion(body1,body2);
     
     flow = new BDIM(n, m, 0, union, (float)chord/Re, QUICK);
 
@@ -77,63 +91,142 @@ class FreeBody {
     plot = new ParticlePlot( view, 10000 );
     plot.setColorMode(4);
     plot.setLegend("Vorticity",-0.5,0.5);
+    
   }
-
+/*----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
   void update() {
-    //body.translate(0,0.1);
-    // save previous time step duration
-    dto = dt;
+    dto = dt;// save previous time step duration
     t+=dt;
-    // calculate next time step duration
     if (QUICK) {
-      dt = flow.checkCFL();
+      dt = flow.checkCFL(); // calculate next time step duration
       flow.dt = dt;
     }
     
-
+    /////////////*BODY1 CONTROL*//////////////NEED 2 TO PLUNGE MORE THAN 1, AND TO COUPLE HEAVE OF 1 WITH PITCH OF 2 - GREATER AOA FOR 2 MAYBE?
     
-    /*Control of free pitch and max/min conditions-----------------------------------------------------------------------------------------------------------------------------------*/
+    LEdge1 = test.body1.coords.get(0); //Leading Edge coords
+    TEdge1 = test.body1.coords.get(100); //Trailing Edge coords
+    pivotx1=LEdge1.x+(TEdge1.x-LEdge1.x)*pivot;
+    Top_limit1 = new PVector(pivotx1,64.0-chord/6,0); //Neutral is (34.0,64.0,0) for initial setup. Smaller is up, larger is down. chord/3 to keep Amplitude down
+    Bottom_limit1 = new PVector(pivotx1,64.0+chord/6,0); //Neutral is (34.0,64.0,0) for initial setup. Smaller is up, larger is down. chord/3 to keep Amplitude down
+    too_high1 = (TEdge1.x-LEdge1.x)*(Top_limit1.y-LEdge1.y)-(TEdge1.y-LEdge1.y)*(Top_limit1.x-LEdge1.x); //Technique from http://www.gamedev.net/topic/542870-determine-which-side-of-a-line-a-point-is/
+    too_low1 = (TEdge1.x-LEdge1.x)*(Bottom_limit1.y-LEdge1.y)-(TEdge1.y-LEdge1.y)*(Bottom_limit1.x-LEdge1.x); //Finds out which side of the foil the turning point is on. Top: -ve is under. Bottom: +ve is over.
+    pure_AOA1 = atan((test.body1.coords.get(100).y-test.body1.coords.get(0).y)/(test.body1.coords.get(100).x-test.body1.coords.get(0).x));
     
-    LE = test.body1.coords.get(0); //Leading Edge coords
-    TE = test.body1.coords.get(100); //Trailing Edge coords
+    LEdge2 = test.body2.coords.get(0); //Leading Edge coords
+    TEdge2 = test.body2.coords.get(100); //Trailing Edge coords
+    pivotx2=LEdge2.x+(TEdge2.x-LEdge2.x)*pivot;
+    Top_limit2 = new PVector(pivotx2,64.0-chord/6,0); //Neutral is (34.0,64.0,0) for initial setup. Smaller is up, larger is down. chord/3 to keep Amplitude down
+    Bottom_limit2 = new PVector(pivotx2,64.0+chord/6,0); //Neutral is (34.0,64.0,0) for initial setup. Smaller is up, larger is down. chord/3 to keep Amplitude down
+    too_high2 = (TEdge2.x-LEdge2.x)*(Top_limit2.y-LEdge2.y)-(TEdge2.y-LEdge2.y)*(Top_limit2.x-LEdge2.x); //Technique from http://www.gamedev.net/topic/542870-determine-which-side-of-a-line-a-point-is/
+    too_low2 = (TEdge2.x-LEdge2.x)*(Bottom_limit2.y-LEdge2.y)-(TEdge2.y-LEdge2.y)*(Bottom_limit2.x-LEdge2.x); //Finds out which side of the foil the turning point is on. Top: -ve is under. Bottom: +ve is over.
+    pure_AOA2 = atan((test.body2.coords.get(100).y-test.body2.coords.get(0).y)/(test.body2.coords.get(100).x-test.body2.coords.get(0).x));
     
-    pivotx=LE.x+(TE.x-LE.x)*pivot;
-    
-    Top_limit = new PVector(pivotx,64.0-chord/2,0); //Neutral is (34.0,64.0,0) for initial setup. Smaller is up, larger is down. Amplitude: chord/2
-    Bottom_limit = new PVector(pivotx,64.0+chord/2,0); //Neutral is (34.0,64.0,0) for initial setup. Smaller is up, larger is down. Amplitude: chord/2
-    Top_side = (TE.x-LE.x)*(Top_limit.y-LE.y)-(TE.y-LE.y)*(Top_limit.x-LE.x); //Technique from http://www.gamedev.net/topic/542870-determine-which-side-of-a-line-a-point-is/
-    Bottom_side = (TE.x-LE.x)*(Bottom_limit.y-LE.y)-(TE.y-LE.y)*(Bottom_limit.x-LE.x); //It finds out which side of the foil the turning point is on. Top: -ve is under. Bottom: +ve is over.
-    PureAOA = atan((test.body1.coords.get(100).y-test.body1.coords.get(0).y)/(test.body1.coords.get(100).x-test.body1.coords.get(0).x));
-    
-    /*Body 1 Movement Control*/
-    
-    if(Top_side>=1){
-      body1.translate(0,body1.dxc.y*sin(0.1*t)); //NEED TO HOLD INITIAL VALUE
-      body1.rotate(-PureAOA*0.1*sin(0.1*t)); //NEED TO HOLD INITIAL VALUE - or derive inertial properties about pivot with external moment added etc
-    }
-    else if(Bottom_side<=1){
-      body1.translate(0,0); //STOP - arbitrary
-      body1.rotate(0.01); //small corrective rotation - arbitrary
-    }
-    else if(PureAOA>=PI/4){
-      body1.rotate(0);
-    }
-    else if(PureAOA<=-PI/4){
-      body1.rotate(0);
+    if(((too_high1 >= 1) && (pure_AOA1 > -hold_AOA1/1.5)) || ((too_low1 <= 1) && (pure_AOA1 < abs(hold_AOA1)/1.5))){ //Need to optimise bite points
+      if(limit_broken1){
+        t1=t1+dt;
+//      body1.rotate(-hold_AOA1*omega*sin(omega*t1)); //Pitch sinusoidally
+        body1.rotate(-hold_AOA1/50);
+        force1 = body1.pressForce(flow.p);        //Only controlling pitch - work out force on body
+        body1.react(force1, dto, dt);             //translate vertically according to force
+        
+        body2.rotate(-hold_AOA2/50);              //SPIN ARBITRARY
+        force2 = body2.pressForce(flow.p);        //Only controlling pitch - work out force on body
+        body2.react(force2, dto, dt);             //translate vertically according to force
+      }
+      else {
+        t1=0;
+        //hold_vel1=body1.dxc.y;
+        hold_AOA1=pure_AOA1;
+        //body1.translate(0,hold_vel1*cos(omega*t));
+//      body1.rotate(-hold_AOA1*omega*sin(omega*t1)); //Pitch sinusoidally
+        body1.rotate(-hold_AOA1/50);              //SPIN ARBITRARY
+        force1 = body1.pressForce(flow.p);        //Only controlling pitch - work out force on body
+        body1.react(force1, dto, dt);             //translate vertically according to force
+        limit_broken1=true;
+        
+        hold_AOA2=pure_AOA2;
+        body2.rotate(-hold_AOA2/50);              //SPIN ARBITRARY
+        force2 = body2.pressForce(flow.p);        //Only controlling pitch - work out force on body
+        body2.react(force2, dto, dt);             //translate vertically according to force
+        limit_broken2=true;
+      }
     }
     else{
-    force1 = body1.pressForce(flow.p);
-    moment1 = body1.pressMoment(flow.p);
-    body1.react(force1, moment1, dto, dt); /* Translate bodes according to pressure force, previous dt, current dt*/
+      /*if(pure_AOA1>=PI/3){ //NEEDS ADJUSTING
+        body1.rotate(0);
+      }
+      else if(pure_AOA1<=-PI/3){ //NEEDS ADJUSTING
+        body1.rotate(0);
+      }
+      else{*/
+      force1 = body1.pressForce(flow.p);
+      moment1 = body1.pressMoment(flow.p);
+      body1.react(force1, moment1, dto, dt); // Translate bodes according to pressure force, previous dt, current dt
+      limit_broken1=false;
+      
+      force2 = body2.pressForce(flow.p);
+      moment2 = body2.pressMoment(flow.p);
+      body2.react(force2, moment2, dto, dt); // Translate bodes according to pressure force, previous dt, current dt
+      limit_broken2=false;
+     }
+    //}
+   
+    /////////////*BODY2 CONTROL*//////////////Commented sections can be uncommented to give independent motion (remember to take out combined body 2 sections)
+    
+/*    LEdge2 = test.body2.coords.get(0); //Leading Edge coords
+    TEdge2 = test.body2.coords.get(100); //Trailing Edge coords
+    
+    pivotx2=LEdge2.x+(TEdge2.x-LEdge2.x)*pivot;
+    
+    Top_limit2 = new PVector(pivotx2,64.0-chord/6,0); //Neutral is (34.0,64.0,0) for initial setup. Smaller is up, larger is down. chord/3 to keep Amplitude down
+    Bottom_limit2 = new PVector(pivotx2,64.0+chord/6,0); //Neutral is (34.0,64.0,0) for initial setup. Smaller is up, larger is down. chord/3 to keep Amplitude down
+    
+    too_high2 = (TEdge2.x-LEdge2.x)*(Top_limit2.y-LEdge2.y)-(TEdge2.y-LEdge2.y)*(Top_limit2.x-LEdge2.x); //Technique from http://www.gamedev.net/topic/542870-determine-which-side-of-a-line-a-point-is/
+    too_low2 = (TEdge2.x-LEdge2.x)*(Bottom_limit2.y-LEdge2.y)-(TEdge2.y-LEdge2.y)*(Bottom_limit2.x-LEdge2.x); //Finds out which side of the foil the turning point is on. Top: -ve is under. Bottom: +ve is over.
+    
+    pure_AOA2 = atan((test.body2.coords.get(100).y-test.body2.coords.get(0).y)/(test.body2.coords.get(100).x-test.body2.coords.get(0).x));
+   
+    if(((too_high2 >= 1) && (pure_AOA2 > -hold_AOA2/1.5))|| ((too_low2 <= 1) && (pure_AOA2 < abs(hold_AOA2)/1.5))){ //Need to optimise bite points
+      if(limit_broken2){
+        t2=t2+dt;
+//      body2.rotate(-hold_AOA2*omega*sin(omega*t2)); //Pitch sinusoidally
+        body2.rotate(-hold_AOA2/50);              //SPIN ARBITRARY
+        force2 = body2.pressForce(flow.p);        //Only controlling pitch - work out force on body
+        body2.react(force2, dto, dt);             //translate vertically according to force
+      }
+      else {
+        t2=0;
+        //hold_vel2=body2.dxc.y;
+        hold_AOA2=pure_AOA2;
+        //body2.translate(0,hold_vel2*cos(omega*t2));
+//      body2.rotate(-hold_AOA1*omega*sin(omega*t2)); //Pitch sinusoidally
+        body2.rotate(-hold_AOA2/50);              //SPIN ARBITRARY
+        force2 = body2.pressForce(flow.p);        //Only controlling pitch - work out force on body
+        body2.react(force2, dto, dt);             //translate vertically according to force
+        limit_broken2=true;
+      }
     }
+    else{
+      limit_broken2=false;
+/*    if(pure_AOA2>=PI/3){ //NEEDS ADJUSTING
+        body2.rotate(0);
+      }
+      else if(pure_AOA2<=-PI/3){ //NEEDS ADJUSTING
+        body2.rotate(0);
+      }
+      else{
+*/
+/*      force2 = body2.pressForce(flow.p);
+      moment2 = body2.pressMoment(flow.p);
+      body2.react(force2, moment2, dto, dt); // Translate bodes according to pressure force, previous dt, current dt
+      }
+    //}
+*/    
     
-    /*Body 2 Movement Control*/
+//--------------------------------------------------------------------------------
     
-    force2 = body2.pressForce(flow.p);
-    moment2 = body2.pressMoment(flow.p);
-    body2.react(force2, moment2, dto, dt); /* Translate bodes according to pressure force, previous dt, current dt*/
-    
-    //println("PureAOA = ",PureAOA);
+    //println("pure_AOA1 = ",pure_AOA1);
     //println("PHI = ",body1.phi);
     //println("Velo = ",body1.dxc.y); //vertical velocity of body
     //println("Spin = ",body1.dphi); //rotational velocity of body
@@ -153,7 +246,7 @@ class FreeBody {
   void display() {
     flood.display(flow.u.vorticity());
     union.display();
-    plot.update(flow); // !NOTE!
+    plot.update(flow); // !NOTEdge1!
     plot.display(flow.u.vorticity());
   }
 }
@@ -190,7 +283,7 @@ class EllipseD extends Body {
  
 FreeNACA test;
 
-//INPUT PARAMETERS_______________________________________________________________________
+//INPUT PARAMETEdge1RS_______________________________________________________________________
 int resolution = 16;               // number of grid points spanning radius of vortex
 int xLengths = 12;                // (streamwise length of computational domain)/(resolution)
 int yLengths = 8;                 // (transverse length of computational domain)/(resolution)

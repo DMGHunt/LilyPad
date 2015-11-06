@@ -292,7 +292,7 @@ class Body {
     dx = -dt2*(dt1+dt2)/2*force.x/mass + dt2/dt1*dxc.x;
     dy = -dt2*(dt1+dt2)/2*force.y/mass + dt2/dt1*dxc.y; 
     dp = -dt2*(dt1+dt2)/2*moment/I0 + dt2/dt1*dphi;
-    translate(0, yfree?dy:0); // translate(xfree?dx:0, yfree?dy:0);
+    translate(0, yfree?dy:0); // translate(xfree?dx:0, yfree?dy:0); THIS HAS BEEN CHANGED TO 0 FOR THIS APPLICATION
     rotate(dp);
   }
   void react (PVector force, float dt1, float dt2) {react(force, 0, dt1, dt2);}

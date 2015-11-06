@@ -15,7 +15,7 @@ int zoom=5;
 int area = 60000;                // window view area
 int Re = 242718;                   // Reynolds number from Excel
 //////float St = 0.2;
-float mr = 2;                     // mass ratio = (body mass)/(mass of displaced fluid)
+float mr = 1;                     // mass ratio = (body mass)/(mass of displaced fluid)
 //_______________________________________________________________________________________
 
 void settings(){
@@ -29,22 +29,22 @@ void setup() {
   // create FreeCylinder object
   test = new FreeBody(resolution, Re, xLengths, yLengths, mr);
   //body.rotate(PI/4);
+  test.body1.rotate(PI/10);
+  test.body2.rotate(-PI/10);
   
   dat = new SaveData("pressuretest1.txt",test.body1.coords,resolution,xLengths,yLengths,zoom);
-  
   phi1Save = new SaveData("phi1.txt",test.body1.coords,resolution,xLengths,yLengths,zoom);
-  
   saveForce_1x = new SaveData("saveForce_1x.txt", test.body1.coords,resolution,xLengths,yLengths,zoom);
   saveForce_1y = new SaveData("saveForce_1y.txt", test.body1.coords,resolution,xLengths,yLengths,zoom);
   saveForce_1xy = new SaveData("saveForce_1xy.txt", test.body1.coords,resolution,xLengths,yLengths,zoom);
-  
   saveMoment_1 = new SaveData("saveMoment_1.txt", test.body1.coords,resolution,xLengths,yLengths,zoom);
 }
 
 void draw() {
   test.update(); 
   test.display();
-  phi1Save.saveFloat(test.PureAOA);
+  
+  phi1Save.saveFloat(test.pure_AOA1);
   dat.addData(test.t, test.flow.p);
   saveForce_1x.saveFloat(test.force1.x);
   saveForce_1y.saveFloat(test.force1.y);
