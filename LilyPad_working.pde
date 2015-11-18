@@ -1,4 +1,6 @@
 import hypermedia.net.*;
+
+/*UDP
 int PORT_RX_A = 58432;//This port
 int PORT_OUT_A = 58431;//Target port (sending data)
 int PORT_RX_B = 40000;
@@ -7,21 +9,24 @@ String HOST_IP = "234.5.6.7";//This IP (host)
 String TARGET_IP = "234.5.6.7";//This IP (target)
 UDP udpA;
 UDP udpB;
+*/
 
 FreeBody test;
 Body body;
+
+/*SAVEDATA
 SaveData dat;
 SaveData phi1Save;
 SaveData saveForce_1x;
 SaveData saveForce_1y;
 SaveData saveForce_1xy;
 SaveData saveMoment_1;
-
+*/
 //INPUT PARAMETERS_______________________________________________________________________
 int resolution = (int)pow(2,4);              // number of grid points spanning radius of vortex
-int xLengths = 12;                // (streamwise length of computational domain)/(resolution)
-int yLengths = 8;                 // (transverse length of computational domain)/(resolution)
-int zoom=5;
+int xLengths = 9;                // (streamwise length of computational domain)/(resolution)
+int yLengths = 6;                 // (transverse length of computational domain)/(resolution)
+int zoom=4;
 int area = 60000;                // window view area
 int Re = 242718;                   // Reynolds number from Excel
 //////float St = 0.2;
@@ -39,16 +44,20 @@ void setup() {
   // create FreeCylinder object
   test = new FreeBody(resolution, Re, xLengths, yLengths, mr);
   //body.rotate(PI/4);
-  test.body1.rotate(PI/10);
-  test.body2.rotate(-PI/10);
+//  test.body1.rotate(PI/8);
+//  test.body2.rotate(-PI/8);
+//  test.body1.updatePositionOnly();
+//  test.body2.updatePositionOnly();
   
+/*SAVEDATA
   dat = new SaveData("pressuretest1.txt",test.body1.coords,resolution,xLengths,yLengths,zoom);
   phi1Save = new SaveData("phi1.txt",test.body1.coords,resolution,xLengths,yLengths,zoom);
   saveForce_1x = new SaveData("saveForce_1x.txt", test.body1.coords,resolution,xLengths,yLengths,zoom);
   saveForce_1y = new SaveData("saveForce_1y.txt", test.body1.coords,resolution,xLengths,yLengths,zoom);
   saveForce_1xy = new SaveData("saveForce_1xy.txt", test.body1.coords,resolution,xLengths,yLengths,zoom);
   saveMoment_1 = new SaveData("saveMoment_1.txt", test.body1.coords,resolution,xLengths,yLengths,zoom);
-
+*/
+/*UDP
   udpA = new UDP(this, PORT_RX_A, HOST_IP);
   udpA.log(true);
   //udpA.listen(true);
@@ -56,22 +65,26 @@ void setup() {
   udpB = new UDP(this, PORT_RX_B, HOST_IP);
   udpB.log(true);
   //udpB.listen(true);
+*/
 }
 
 void draw() {
   test.update(); 
   test.display();
+  test.testcase();
   
+/*SAVEDATA
   phi1Save.saveFloat(test.pure_AOA1);
   dat.addData(test.t, test.flow.p);
   saveForce_1x.saveFloat(test.force1.x);
   saveForce_1y.saveFloat(test.force1.y);
   saveForce_1xy.savePVector(test.force1);
   saveMoment_1.saveFloat(test.moment1);
-  
+*/
+/*UDP
   udpA.send(test.force1.y + "," + test.pure_AOA1,TARGET_IP,PORT_OUT_A);
   udpB.send("angle = " + test.pure_AOA1,TARGET_IP,PORT_OUT_B);
-  
+*/
   //println(VectorField flow.rhoi);
   
   //dat.finish();

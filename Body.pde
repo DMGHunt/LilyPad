@@ -175,7 +175,7 @@ class Body {
     }
   }
 
-  float distance( float x, float y ) { // in cells
+  float distance( float x, float y ) { // in cells USE THIS
     float dis = -1e10;
     if (n>4) { // check distance to bounding box
       dis = box.distance(x, y);
