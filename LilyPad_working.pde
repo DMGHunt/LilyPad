@@ -24,29 +24,22 @@ SaveData saveMoment_1;
 */
 //INPUT PARAMETERS_______________________________________________________________________
 int resolution = (int)pow(2,5);              // number of grid points spanning radius of vortex
-int xLengths = 9;                // (streamwise length of computational domain)/(resolution)
+int xLengths = 8;                // (streamwise length of computational domain)/(resolution)
 int yLengths = 6;                 // (transverse length of computational domain)/(resolution)
 int zoom=1;
-int area = 60000;                // window view area
 int Re = 242718;                   // Reynolds number from Excel
 //////float St = 0.2;
 float mr = 1;                     // mass ratio = (body mass)/(mass of displaced fluid)
 //_______________________________________________________________________________________
 
 void settings(){
-  // set window view area 
-  float s = sqrt(area*xLengths/yLengths);
-  size((int)s, (int)s*yLengths/xLengths);
   size(zoom*xLengths*resolution, zoom*yLengths*resolution); //display window size (used to be size(600,600); in setup. Setup only takes integers, not variables).
 }
 
 void setup() {
-  // create FreeCylinder object
   test = new FreeBody(resolution, Re, xLengths, yLengths, mr);
-  //body.rotate(PI/4);
   test.body1.rotate(PI/8);test.body1.updatePositionOnly();
-//  test.body2.rotate(-PI/8);test.body2.updatePositionOnly(); 
-  
+  test.body2.rotate(-PI/8);test.body2.updatePositionOnly(); 
 /*SAVEDATA
   dat = new SaveData("pressuretest1.txt",test.body1.coords,resolution,xLengths,yLengths,zoom);
   phi1Save = new SaveData("phi1.txt",test.body1.coords,resolution,xLengths,yLengths,zoom);
@@ -69,8 +62,8 @@ void setup() {
 void draw() {
   test.update(); 
   test.display();
-  test.testcase();
-  
+  test.control1();
+  test.control2();
 /*SAVEDATA
   phi1Save.saveFloat(test.pure_AOA1);
   dat.addData(test.t, test.flow.p);
