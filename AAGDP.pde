@@ -38,8 +38,8 @@ class FreeBody {
   BDIM flow;
   boolean QUICK = true, order2 = true;
   int n, m, resolution;
-  Body body1;
-  Body body2;
+  ReactNACA body1;
+  ReactNACA body2;
   Body EllipseD;
   BodyUnion union;
   ParticlePlot plot;
@@ -67,18 +67,17 @@ class FreeBody {
     Window view = new Window( n, m);
     chord = resolution;
     
-    body1 = new NACA(2.5*n/10, m/2, chord, 0.12, pivot, view);
-    body1.mass = mr*body1.area; //INERTIA = t/12. or 1??????????????????????/
-    body2 = new NACA(5*n/10, m/2, chord, 0.12, pivot, view);
-    body2.mass = mr*body2.area; //INERTIA = t/12. or 1??????????????????????/
-    
-    //EllipseD = new EllipseD(n/10,m/2,n/20,1,view);
-    //EllipseD.rotate(-PI/2);
-    
-    //union = new BodyUnion(EllipseD, new BodyUnion( body1, body2));
+    body1 = new ReactNACA(2.5*n/10,m/2,chord,0.12,pivot,view);
+    body2 = new ReactNACA(5*n/10,m/2,chord,0.12,pivot,view);
     union = new BodyUnion(body1,body2);
     
-    flow = new BDIM(n, m, 0, union, (float)chord/Re, QUICK=false);
+    //EllipseD = new EllipseD(n/10,m/2,n/20,1,view);
+    //EllipseD.rotate(-PI/2); 
+    //union = new BodyUnion(EllipseD, new BodyUnion( body1, body2));
+    
+    flow = new BDIM(n,m,0,union,(float)chord/Re,QUICK);
+    body1.xfree = false;
+    body2.xfree = false;
   
     flood = new FloodPlot(view); 
     flood.range = new Scale(-.5, .5);
@@ -91,22 +90,16 @@ class FreeBody {
   }
 /*----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
   void update() {
-    dto = dt;// save previous time step duration
-    t+=dt;
-    if (QUICK) {
-      dt = flow.checkCFL(); // calculate next time step duration
-      flow.dt = dt;
-    }    
-    union.update(); //if(position of centroid
-    flow.update(union);
-    if (order2) {
-      flow.update2();
-    }
+    dto = dt;t+=dt;//save previous
+    if (QUICK) {dt = flow.checkCFL();flow.dt = dt;}//calculate next
+    union.update();flow.update(union);
+    if (order2) {flow.update2();}//how to find out?
   }
   
   void testcase(){
     force1 = body1.pressForce(flow.p);
-    body1.react(force1, dto, dt); 
+    moment1 = body1.pressMoment(flow.p);
+    body1.react(force1, moment1, dto, dt); 
     //body1.translate(-0.5,-0.5);
     //body1.rotate(0.1);
   }

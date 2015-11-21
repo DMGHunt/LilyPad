@@ -23,10 +23,10 @@ SaveData saveForce_1xy;
 SaveData saveMoment_1;
 */
 //INPUT PARAMETERS_______________________________________________________________________
-int resolution = (int)pow(2,4);              // number of grid points spanning radius of vortex
+int resolution = (int)pow(2,5);              // number of grid points spanning radius of vortex
 int xLengths = 9;                // (streamwise length of computational domain)/(resolution)
 int yLengths = 6;                 // (transverse length of computational domain)/(resolution)
-int zoom=4;
+int zoom=1;
 int area = 60000;                // window view area
 int Re = 242718;                   // Reynolds number from Excel
 //////float St = 0.2;
@@ -44,10 +44,8 @@ void setup() {
   // create FreeCylinder object
   test = new FreeBody(resolution, Re, xLengths, yLengths, mr);
   //body.rotate(PI/4);
-//  test.body1.rotate(PI/8);
-//  test.body2.rotate(-PI/8);
-//  test.body1.updatePositionOnly();
-//  test.body2.updatePositionOnly();
+  test.body1.rotate(PI/8);test.body1.updatePositionOnly();
+//  test.body2.rotate(-PI/8);test.body2.updatePositionOnly(); 
   
 /*SAVEDATA
   dat = new SaveData("pressuretest1.txt",test.body1.coords,resolution,xLengths,yLengths,zoom);

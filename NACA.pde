@@ -65,3 +65,42 @@ class NACA extends Body{
 //    return PVector.div(pv,c);
 //  }
 }
+
+class ReactNACA extends NACA{
+  float Ia, Ma, dp0 = 0;
+  PVector dxc0 = new PVector(0,0);
+  
+  ReactNACA( float x, float y, float c, float t, float pivot, float mr, Window window ){
+    super( x, y, c, t, pivot, window );                // Init NACA
+    mass *= mr; I0 *= mr;                              // Adjust mass ratio
+    Ma = PI*mr*sq(c/2);                                // Linear added-mass
+    Ia = 0.125*mr*PI*pow(c/2,4)+Ma*sq(pivot*(c-0.5));  // Angular added-mass
+    println("Added-mass ratio = "+Ma/mass);
+    println("Added-moment ratio = "+Ia/I0);
+  }
+  ReactNACA( float x, float y, float c, float t, float pivot, Window window){
+    this( x, y, c, t, pivot, 1, window );
+  }
+
+  void react (PVector force, float moment, float dt1, float dt2) {
+
+// added mass vectorization
+    float nx = sq(sin(phi)), ny = sq(cos(phi));
+    
+// old accelerations
+    float ax = (dxc.x-dxc0.x)/sq(dt1), ay = (dxc.y-dxc0.y)/sq(dt1);
+    float alpha = (dphi-dp0)/sq(dt1);
+
+// added-mass corrected integration
+    float dx = dt2*(dt1+dt2)/2*(-force.x+nx*Ma*ax)/(mass+nx*Ma) + dt2/dt1*dxc.x;
+    float dy = dt2*(dt1+dt2)/2*(-force.y+ny*Ma*ay)/(mass+ny*Ma) + dt2/dt1*dxc.y; 
+    float dp = dt2*(dt1+dt2)/2*(-moment+Ia*alpha)/(I0+Ia) + dt2/dt1*dphi;
+
+// save old values
+    dxc0 = dxc; dp0 = dphi;
+
+// move the body
+    translate(xfree?dx:0, yfree?dy:0); 
+    rotate(dp);
+  }
+}
