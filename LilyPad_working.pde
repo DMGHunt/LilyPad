@@ -1,6 +1,38 @@
 import hypermedia.net.*;
+FreeBody test;
 
-/*UDP
+int resolution = (int)pow(2,5);              // number of grid points spanning radius of vortex
+int xLengths = 10;                // (streamwise length of computational domain)/(resolution)
+int yLengths = 6;                 // (transverse length of computational domain)/(resolution)
+int zoom=3;
+int Re = 242718;                   // Reynolds number from Excel
+//float St = 0.2;
+float mr = 1;                     // mass ratio = (body mass)/(mass of displaced fluid)
+
+void settings(){
+  size(zoom*xLengths*resolution, zoom*yLengths*resolution); //display window size (used to be size(600,600); in setup. Setup only takes integers, not variables).
+}
+void setup() {
+  test = new FreeBody(resolution, Re, xLengths, yLengths, mr);
+  test.body1.rotate(PI/8);test.body1.updatePositionOnly();
+  test.body2.rotate(-PI/8);test.body2.updatePositionOnly(); 
+}
+void draw() {
+  test.update();
+  test.display();
+  test.control1();
+  test.control2();
+  float q=(float)test.m;
+  println(test.body1.distance(test.pivotx1,q/2-test.chord/6));
+  println(test.body1.distance(test.pivotx1,q/2-test.chord/6));
+  println(test.body1.distance(test.pivotx1,q/2-test.chord/6));
+  println(test.body1.distance(test.pivotx1,q/2-test.chord/6));
+}
+void keyPressed(){exit();}
+
+
+
+/*UDP;declarations()
 int PORT_RX_A = 58432;//This port
 int PORT_OUT_A = 58431;//Target port (sending data)
 int PORT_RX_B = 40000;
@@ -10,11 +42,7 @@ String TARGET_IP = "234.5.6.7";//This IP (target)
 UDP udpA;
 UDP udpB;
 */
-
-FreeBody test;
-Body body;
-
-/*SAVEDATA
+/*SAVEDATA;declarations()
 SaveData dat;
 SaveData phi1Save;
 SaveData saveForce_1x;
@@ -22,25 +50,7 @@ SaveData saveForce_1y;
 SaveData saveForce_1xy;
 SaveData saveMoment_1;
 */
-//INPUT PARAMETERS_______________________________________________________________________
-int resolution = (int)pow(2,5);              // number of grid points spanning radius of vortex
-int xLengths = 8;                // (streamwise length of computational domain)/(resolution)
-int yLengths = 6;                 // (transverse length of computational domain)/(resolution)
-int zoom=1;
-int Re = 242718;                   // Reynolds number from Excel
-//////float St = 0.2;
-float mr = 1;                     // mass ratio = (body mass)/(mass of displaced fluid)
-//_______________________________________________________________________________________
-
-void settings(){
-  size(zoom*xLengths*resolution, zoom*yLengths*resolution); //display window size (used to be size(600,600); in setup. Setup only takes integers, not variables).
-}
-
-void setup() {
-  test = new FreeBody(resolution, Re, xLengths, yLengths, mr);
-  test.body1.rotate(PI/8);test.body1.updatePositionOnly();
-  test.body2.rotate(-PI/8);test.body2.updatePositionOnly(); 
-/*SAVEDATA
+/*SAVEDATA;setup()
   dat = new SaveData("pressuretest1.txt",test.body1.coords,resolution,xLengths,yLengths,zoom);
   phi1Save = new SaveData("phi1.txt",test.body1.coords,resolution,xLengths,yLengths,zoom);
   saveForce_1x = new SaveData("saveForce_1x.txt", test.body1.coords,resolution,xLengths,yLengths,zoom);
@@ -57,14 +67,7 @@ void setup() {
   udpB.log(true);
   //udpB.listen(true);
 */
-}
-
-void draw() {
-  test.update(); 
-  test.display();
-  test.control1();
-  test.control2();
-/*SAVEDATA
+/*SAVEDATA;draw()
   phi1Save.saveFloat(test.pure_AOA1);
   dat.addData(test.t, test.flow.p);
   saveForce_1x.saveFloat(test.force1.x);
@@ -79,6 +82,3 @@ void draw() {
   //println(VectorField flow.rhoi);
   
   //dat.finish();
-}
-
-void keyPressed(){exit();}

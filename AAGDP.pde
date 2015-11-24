@@ -1,39 +1,3 @@
-/*
-FreeBody test;
-Body body;
-
-//INPUT PARAMETEdge1RS_______________________________________________________________________
-int resolution = (int)pow(2,4);              // number of grid points spanning radius of vortex
-int xLengths = 12;                // (streamwise length of computational domain)/(resolution)
-int yLengths = 8;                 // (transverse length of computational domain)/(resolution)
-int zoom=5;
-int area = 600000;                // window view area
-int Re = 100000;                   // Reynolds number
-float mr = 2;                     // mass ratio = (body mass)/(mass of displaced fluid)
-//_______________________________________________________________________________________
-
-void settings(){
-  // set window view area 
-  float s = sqrt(area*xLengths/yLengths);
-  size((int)s, (int)s*yLengths/xLengths);
-  size(zoom*xLengths*resolution, zoom*yLengths*resolution); //display window size (used to be size(600,600); in setup. Setup only takes integers, not variables).
-}
-
-void setup() {
-  // create FreeCylinder object
-  test = new FreeBody(resolution, Re, xLengths, yLengths, mr);
-  //body.rotate(PI/4);
-  
-}
-
-void draw() {
-  test.update(); 
-  test.display();
-}
-
-void keyPressed(){exit();}
-*/
-/*----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 class FreeBody {
   BDIM flow;
   boolean QUICK = true, order2 = true;
@@ -44,8 +8,14 @@ class FreeBody {
   BodyUnion union;
   ParticlePlot plot;
   FloodPlot flood;
-  float t=0, dt=1, dto=1, chord, mr, pivot=0.3;
-  
+ 
+/*ATTEMPT AT GENERALISED CONTROL------------------------------------ATTEMPT AT GENERALISED CONTROL-----------------------------------ATTEMPT AT GENERALISED CONTROL---------------------
+  PVector Top_limit,Bottom_limit,LEdge,TEdge,force;
+  float time=0,pitch,too_high,too_low,pivotx,hold_vel,hold_AOA,moment;
+  boolean limit_broken;
+--ATTEMPT AT GENERALISED CONTROL------------------------------------ATTEMPT AT GENERALISED CONTROL-----------------------------------ATTEMPT AT GENERALISED CONTROL-------------------*/
+  float chord, mr, pivot=0.5, x_body1,limit_spin=-0.00000001;
+  float t=0, dt=1, dto=1;
   PVector Top_limit1, Bottom_limit1, LEdge1, TEdge1; //Top_limit1 = point of downward force, Bottom_limit1 is upward
   PVector Top_limit2, Bottom_limit2, LEdge2, TEdge2; //Top_limit1 = point of downward force, Bottom_limit1 is upward
   float pitch1, too_high1, too_low1, pivotx1;
@@ -67,8 +37,8 @@ class FreeBody {
     Window view = new Window( n, m);
     chord = resolution;
     
-    body1 = new ReactNACA(2.5*n/10,m/2,chord,0.12,pivot,view);
-    body2 = new ReactNACA(5*n/10,m/2,chord,0.12,pivot,view);
+    body1 = new ReactNACA(x_body1=2.5*n/10,m/2,chord,0.12,pivot,view);
+    body2 = new ReactNACA(x_body1+5*chord,m/2,chord,0.12,pivot,view);
     union = new BodyUnion(body1,body2);
     
     //EllipseD = new EllipseD(n/10,m/2,n/20,1,view);
@@ -95,15 +65,27 @@ class FreeBody {
     union.update();flow.update(union);
     if (order2) {flow.update2();}//how to find out?
   }
-  
   void testcase(){
     force1 = body1.pressForce(flow.p);
     moment1 = body1.pressMoment(flow.p);
     body1.react(force1, moment1, dto, dt); 
-    //body1.translate(-0.5,-0.5);
-    //body1.rotate(0.1);
   }
-    /////////////*BODY1 CONTROL*//////////////NEED 2 TO PLUNGE MORE THAN 1, AND TO COUPLE HEAVE OF 1 WITH PITCH OF 2 - GREATER AOA FOR 2 MAYBE?
+  
+  boolean __OUT_OF_LIMITS__(ReactNACA foil, float pivot, float chord){
+    PVector LEdge = foil.coords.get(0); //Leading Edge coords
+    PVector TEdge = foil.coords.get(100); //Trailing Edge coords
+    float pitch = atan((TEdge.y-LEdge.y)/(TEdge.x-LEdge.x));
+    float pivotx=LEdge.x+(TEdge.x-LEdge.x)*pivot;//PHSICAL X POSITION OF PIVOT
+    
+    PVector _TOP_ = new PVector(pivotx1,m/2-chord/6,0);                                                     
+    PVector _BOTTOM_ = new PVector(pivotx1,m/2+chord/6,0);  //Smaller is up, larger is down. chord/3 to keep Amplitude down
+    float _HIGH_ = (TEdge.x-LEdge.x)*(_TOP_.y-LEdge.y)-(TEdge.y-LEdge.y)*(_TOP_.x-LEdge.x);     //Technique from http://www.gamedev.net/topic/542870-determine-which-side-of-a-line-a-point-is/
+    float _LOW_ = (TEdge.x-LEdge.x)*(_BOTTOM_.y-LEdge.y)-(TEdge.y-LEdge.y)*(_BOTTOM_.x-LEdge.x);
+    
+    if(_HIGH_ >= 1 || _LOW_ <= 1){return true;}
+    else {return false;}
+  }
+    
   void control1() {
     LEdge1 = test.body1.coords.get(0); //Leading Edge coords
     TEdge1 = test.body1.coords.get(100); //Trailing Edge coords
@@ -111,8 +93,8 @@ class FreeBody {
     
     pivotx1=LEdge1.x+(TEdge1.x-LEdge1.x)*pivot;
     
-    Top_limit1 = new PVector(pivotx1,m/2-chord/6,0);                                                        //Neutral is (34.0,64.0,0) for initial setup. Smaller is up, larger is down. chord/3 to keep Amplitude down
-    Bottom_limit1 = new PVector(pivotx1,m/2+chord/6,0);                                                    //Neutral is (34.0,64.0,0) for initial setup. Smaller is up, larger is down. chord/3 to keep Amplitude down
+    Top_limit1 = new PVector(pivotx1,m/2-chord/6,0);                                                     
+    Bottom_limit1 = new PVector(pivotx1,m/2+chord/6,0);  //Smaller is up, larger is down. chord/3 to keep Amplitude down
     too_high1 = (TEdge1.x-LEdge1.x)*(Top_limit1.y-LEdge1.y)-(TEdge1.y-LEdge1.y)*(Top_limit1.x-LEdge1.x);     //Technique from http://www.gamedev.net/topic/542870-determine-which-side-of-a-line-a-point-is/
     too_low1 = (TEdge1.x-LEdge1.x)*(Bottom_limit1.y-LEdge1.y)-(TEdge1.y-LEdge1.y)*(Bottom_limit1.x-LEdge1.x);//Finds out which side of the foil the turning point is on. Top: -ve is under. Bottom: +ve is over.
     
@@ -120,9 +102,8 @@ class FreeBody {
       if(limit_broken1){
         t1=t1+dt;
 //      body1.rotate(-hold_AOA1*omega*sin(omega*t1)); //Pitch sinusoidally
-        body1.rotate(-hold_AOA1/50);
-        force1 = body1.pressForce(flow.p);        //Only controlling pitch - work out force on body
-        body1.react(force1, dto, dt);             //translate vertically according to force
+        force1 = body1.pressForce(flow.p);body1.react(force1, dto, dt); //FREE HEAVE
+        body1.rotate(-hold_AOA1/50);                                    //CONTROLLED PITCH
       }
       else {
         t1=0;
@@ -130,28 +111,37 @@ class FreeBody {
         hold_AOA1=pitch1;
         //body1.translate(0,hold_vel1*cos(omega*t));
 //      body1.rotate(-hold_AOA1*omega*sin(omega*t1)); //Pitch sinusoidally
-        body1.rotate(-hold_AOA1/50);              //SPIN ARBITRARY
-        force1 = body1.pressForce(flow.p);        //Only controlling pitch - work out force on body
-        body1.react(force1, dto, dt);             //translate vertically according to force
+        force1 = body1.pressForce(flow.p);body1.react(force1, dto, dt); //FREE HEAVE
+        body1.rotate(-hold_AOA1/50);                                    //CONTROLLED PITCH
         limit_broken1=true;
       }
     } 
     else{
-      /*if(pitch1>=PI/3){body1.rotate(0);}
-      else if(pitch1<=-PI/3){body1.rotate(0);}
-      else{*/
-      force1 = body1.pressForce(flow.p);
-      moment1 = body1.pressMoment(flow.p);
-      body1.react(force1, moment1, dto, dt); // Translate bodes according to pressure force, previous dt, current dt
-      limit_broken1=false;
+/*      if(pitch1>PI/5){
+        //body1.rotate(limit_spin);                                        //ROTATE INWARDS
+        force1 = body1.pressForce(flow.p);body1.react(force1, 0.001, dto, dt); //FREE HEAVE
+      }
+      else if(pitch1<-PI/5){
+        //body1.rotate(-limit_spin);                                       //ROTATE INWARDS
+        force1 = body1.pressForce(flow.p);body1.react(force1, 0.001, dto, dt); //FREE HEAVE
+      }
+      else{
+*/        force1 = body1.pressForce(flow.p);moment1 = body1.pressMoment(flow.p);body1.react(force1, moment1, dto, dt); //FREE PITCH AND HEAVE
+        limit_broken1=false;
+      
     }
   }
-    
+  
   void control2() {
     LEdge2 = test.body2.coords.get(0);     //Leading Edge coords
     TEdge2 = test.body2.coords.get(100);   //Trailing Edge coords
     pitch2 = atan((TEdge2.y-LEdge2.y)/(TEdge2.x-LEdge2.x));
     
+    println("Difference = "+(PI/5-pitch2));
+    println("Difference = "+(PI/5-pitch2));
+    println("Difference = "+(PI/5-pitch2));
+    println("Difference = "+(PI/5-pitch2));
+   
     pivotx2=LEdge2.x+(TEdge2.x-LEdge2.x)*pivot;
     
     Top_limit2 = new PVector(pivotx2,m/2-chord/6,0);                                                                                   //Neutral is (34.0,64.0,0) for initial setup. Smaller is up, larger is down. chord/3 to keep Amplitude down
@@ -176,15 +166,88 @@ class FreeBody {
       }
     }
     else{
-      /*if(pitch1>=PI/3){body1.rotate(0);}
-      else if(pitch1<=-PI/3){body1.rotate(0);}
-      else{*/
-      force2 = body2.pressForce(flow.p);
-      moment2 = body2.pressMoment(flow.p);
-      body2.react(force2, moment2, dto, dt); // Translate bodes according to pressure force, previous dt, current dt
-      limit_broken2=false;
+      if(pitch2>PI/5){
+        body2.rotate(limit_spin);                                        //ROTATE INWARDS
+        force2 = body2.pressForce(flow.p);body2.react(force2, dto, dt);  //FEEE HEAVE
+        println("AAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+        println("AAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+        println("AAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+        println("AAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+      } 
+      else if(pitch2<-PI/5){
+        body2.rotate(-limit_spin);                                       //ROTATE INWARDS
+        force2 = body2.pressForce(flow.p);body2.react(force2, dto, dt);  //FEEE HEAVE
+        println("BBBBBBBBBBBBBBBBBBBBBBBBBBBB");
+        println("BBBBBBBBBBBBBBBBBBBBBBBBBBBB");
+        println("BBBBBBBBBBBBBBBBBBBBBBBBBBBB");
+        println("BBBBBBBBBBBBBBBBBBBBBBBBBBBB");
+      } 
+      else{
+        force2 = body2.pressForce(flow.p);
+        moment2 = body2.pressMoment(flow.p);
+        body2.react(force2, moment2, dto, dt); // Translate bodes according to pressure force, previous dt, current dt
+        limit_broken2=false;
       }
     }
+  }
+  void display() {
+    flood.display(flow.u.vorticity());
+    union.display();
+    plot.update(flow); // !NOTEdge1!
+    plot.display(flow.u.vorticity());
+  }
+  
+/*ATTEMPT AT GENERALISED CONTROL------------------------------ATTEMPT AT GENERALISED CONTROL---------------------------------ATTEMPT AT GENERALISED CONTROL---------------------------
+  void control(ReactNACA body) {
+    LEdge = test.body.coords.get(0);     //Leading Edge coords
+    TEdge = test.body.coords.get(100);   //Trailing Edge coords
+    pitch = atan((TEdge.y-LEdge.y)/(TEdge.x-LEdge.x));
+    
+    pivotx=LEdge.x+(TEdge.x-LEdge.x)*pivot;
+    
+    Top_limit = new PVector(pivotx,m/2-chord/6,0);                                                                                   //Neutral is (34.0,64.0,0) for initial setup. Smaller is up, larger is down. chord/3 to keep Amplitude down
+    Bottom_limit = new PVector(pivotx,m/2+chord/6,0);                                                                                //Neutral is (34.0,64.0,0) for initial setup. Smaller is up, larger is down. chord/3 to keep Amplitude down
+    too_high = (TEdge.x-LEdge.x)*(Top_limit.y-LEdge.y)-(TEdge.y-LEdge.y)*(Top_limit.x-LEdge.x);                                //Technique from http://www.gamedev.net/topic/542870-determine-which-side-of-a-line-a-point-is/
+    too_low = (TEdge.x-LEdge.x)*(Bottom_limit.y-LEdge.y)-(TEdge.y-LEdge.y)*(Bottom_limit.x-LEdge.x);                           //Finds out which side of the foil the turning point is on. Top: -ve is under. Bottom: +ve is over.
+    
+    if(((too_high >= 1) && (pitch > -hold_AOA/1.5)) || ((too_low <= 1) && (pitch < abs(hold_AOA)/1.5))){ //Need to optimise bite points
+      if(limit_broken){
+        time=time+dt;
+        body.rotate(-hold_AOA/50);  //SPIN ARBITRARY
+        force = body.pressForce(flow.p);        //Only controlling pitch - work out force on body
+        body.react(force, dto, dt);             //translate vertically according to force
+      }
+      else {
+        time=0;
+        hold_AOA=pitch;
+        body.rotate(-hold_AOA/50);              //SPIN ARBITRARY
+        force = body.pressForce(flow.p);        //Only controlling pitch - work out force on body
+        body.react(force, dto, dt);             //translate vertically according to force
+        limit_broken=true;
+      }
+    }
+    else{
+      if(pitch>PI/3){body.rotate(-limit_spin);}
+      else if(pitch<-PI/3){body.rotate(limit_spin);}
+      else{
+        force = body.pressForce(flow.p);
+        moment = body.pressMoment(flow.p);
+        body.react(force, moment, dto, dt); // Translate bodes according to pressure force, previous dt, current dt
+        limit_broken=false;
+      }
+    }
+  }
+ATTEMPT AT GENERALISED CONTROL-------------------------------------ATTEMPT AT GENERALISED CONTROL----------------------------------------ATTEMPT AT GENERALISED CONTROL--------------*/
+}
+  
+  
+  
+  
+  
+  
+  
+  
+  
     //}
    
     /////////////*BODY2 CONTROL*//////////////Commented sections can be uncommented to give independent motion (remember to take out combined body 2 sections)
@@ -250,13 +313,7 @@ class FreeBody {
     //println(TEdge1); //There are 200 points total (counted from saved file see SaveData)
     //println(TEdge1.x);
 
-  void display() {
-    flood.display(flow.u.vorticity());
-    union.display();
-    plot.update(flow); // !NOTEdge1!
-    plot.display(flow.u.vorticity());
-  }
-}
+
 
 /********************************
 EllipseD
@@ -277,101 +334,3 @@ class EllipseD extends Body {
     end(); // finalize shape
   }
 }
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/*************************
- FreeNACA class
- 
- This is an example class for simulating the interaction between the flow and a free
- NACA foil.
- 
- Example code:
- 
-FreeNACA test;
-
-//INPUT PARAMETEdge1RS_______________________________________________________________________
-int resolution = 16;               // number of grid points spanning radius of vortex
-int xLengths = 12;                // (streamwise length of computational domain)/(resolution)
-int yLengths = 8;                 // (transverse length of computational domain)/(resolution)
-int area = 300000;                // window view area
-int Re = 100;                     // Reynolds number
-float mr = 2;                     // mass ratio = (body mass)/(mass of displaced fluid)
-//_______________________________________________________________________________________
-
-void settings(){
-  // set window view area 
-  float s = sqrt(area*xLengths/yLengths);
-  size((int)s, (int)s*yLengths/xLengths);
-}
-void setup() {
-  // create FreeCylinder object
-  test = new FreeNACA(resolution, Re, xLengths, yLengths, mr);
-}
-
-void draw() {
-  test.update(); 
-  test.display();
-}
-
-void keyPressed(){exit();}
-***********************/
-
-
-class FreeNACA {
-  BDIM flow;
-  boolean QUICK = true, order2 = true;
-  int n, m, resolution;
-  NACA body;
-  FloodPlot flood;
-  float dt=1, dto=1, D, mr;
-  PVector force;
-
-  FreeNACA(int resolution, int Re, int xLengths, int yLengths, float mr) {
-    this.resolution = resolution;
-    this.mr = mr;
-    n=xLengths*resolution;
-    m=yLengths*resolution;
-    Window view = new Window(0, 0, n, m);
-    D = resolution;
-    
-    body = new NACA(n/2,n/2,n/6,0.12,view);
-    body.rotate(PI/2);
-    body.mass = mr*body.area;
-    
-    flow = new BDIM(n, m, 0, body, (float)D/Re, QUICK);
-
-    flood = new FloodPlot(view); 
-    flood.range = new Scale(-.5, .5);
-    flood.setLegend("vorticity");
-  }
-
-  void update() {
-    // save previous time step duration
-    dto = dt;
-    // calculate next time step duration
-    if (QUICK) {
-      dt = flow.checkCFL();
-      flow.dt = dt;
-    }
-    
-    // translate body according to pressure force, previous dt, current dt
-    PVector forceP = body.pressForce(flow.p);
-    body.react(forceP, dto, dt);
-    
-    body.update();
-    flow.update(body);
-    if (order2) {
-      flow.update2();
-    }
-  }
-
-  void display() {
-    flood.display(flow.u.vorticity());
-    body.display();
-  }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
