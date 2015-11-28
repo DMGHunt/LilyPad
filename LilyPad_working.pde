@@ -20,13 +20,9 @@ void setup() {
 void draw() {
   test.update();
   test.display();
+  //test.control2();
   test.control1();
-  test.control2();
-  float q=(float)test.m;
-  println(test.body1.distance(test.pivotx1,q/2-test.chord/6));
-  println(test.body1.distance(test.pivotx1,q/2-test.chord/6));
-  println(test.body1.distance(test.pivotx1,q/2-test.chord/6));
-  println(test.body1.distance(test.pivotx1,q/2-test.chord/6));
+  
 }
 void keyPressed(){exit();}
 
