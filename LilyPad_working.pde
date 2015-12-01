@@ -1,10 +1,10 @@
 import hypermedia.net.*;
 FreeBody test;
 
-int resolution = (int)pow(2,5);              // number of grid points spanning radius of vortex
+int resolution = (int)pow(2,4);              // number of grid points spanning radius of vortex
 int xLengths = 10;                // (streamwise length of computational domain)/(resolution)
 int yLengths = 6;                 // (transverse length of computational domain)/(resolution)
-int zoom=3;
+int zoom=5;
 int Re = 242718;                   // Reynolds number from Excel
 //float St = 0.2;
 float mr = 1;                     // mass ratio = (body mass)/(mass of displaced fluid)
