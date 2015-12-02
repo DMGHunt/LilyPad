@@ -1,11 +1,11 @@
 import hypermedia.net.*;
 FreeBody test;
 
-int resolution = (int)pow(2,4);              // number of grid points spanning radius of vortex
+int resolution = (int)pow(2,5);   // number of grid points spanning radius of vortex
 int xLengths = 10;                // (streamwise length of computational domain)/(resolution)
 int yLengths = 6;                 // (transverse length of computational domain)/(resolution)
-int zoom=5;
-int Re = 242718;                   // Reynolds number from Excel
+int zoom=3;
+int Re = 242718;                  // Reynolds number from Excel
 //float St = 0.2;
 float mr = 1;                     // mass ratio = (body mass)/(mass of displaced fluid)
 
@@ -15,14 +15,14 @@ void settings(){
 void setup() {
   test = new FreeBody(resolution, Re, xLengths, yLengths, mr);
   test.body1.rotate(PI/8);test.body1.updatePositionOnly();
-  test.body2.rotate(-PI/8);test.body2.updatePositionOnly(); 
+  test.body2.rotate(-PI/8);test.body2.updatePositionOnly();
 }
 void draw() {
   test.update();
   test.display();
   //test.control2();
   test.control1();
-  
+  //test.testcase();
 }
 void keyPressed(){exit();}
 
