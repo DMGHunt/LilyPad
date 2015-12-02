@@ -14,7 +14,7 @@ void settings(){
 }
 void setup() {
   test = new FreeBody(resolution, Re, xLengths, yLengths, mr);
-  test.body1.rotate(PI/8);test.body1.updatePositionOnly();
+  test.body1.rotate(-PI/8);test.body1.updatePositionOnly();
   test.body2.rotate(-PI/8);test.body2.updatePositionOnly();
 }
 void draw() {

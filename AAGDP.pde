@@ -14,7 +14,7 @@ class FreeBody {
   float time=0,pitch,too_high,too_low,pivotx,hold_vel,hold_AOA,moment;
   boolean limit_broken;
 --ATTEMPT AT GENERALISED CONTROL------------------------------------ATTEMPT AT GENERALISED CONTROL-----------------------------------ATTEMPT AT GENERALISED CONTROL-------------------*/
-  float chord, mr, pivot=0.3, x_body1, limit_spin=-0.00000001;
+  float chord, mr, pivot=0.5, x_body1, limit_spin=-0.00000001;
   
   float t=0, dt=1, dto=1;
   
@@ -115,9 +115,11 @@ class FreeBody {
           println("AAAAAAAAAAAAAA");
           t1=0;                               //set iterative time to 0
           hold_vel1=body1.dxc.y;              //hold initial velocity
-          s1 = test.chord/10;                 //set vertical distance at limits
-          a1 = pow(hold_vel1,2)/(2*s1);       //suvat to find required translational acceleration
+          s1 = test.chord/10;          //set vertical distance at limits
+          if(hold_vel1<0){a1 = pow(hold_vel1,2)/(2*s1);} //suvat to find required translational acceleration
+          else{a1 = -pow(hold_vel1,2)/(2*s1);}  //suvat to find required translational acceleration
           hold_AOA1 = PITCH(test.body1);      //hold initial angle
+          //if(hold_AOA>0
           spin1 = 0.5*hold_AOA1*a1/hold_vel1; //Required rotational velocity based on suvat. 0.5 constant is guess to sync trans and rot (theoretically should be 1).
           translate1=hold_vel1+a1*t1;         //suvat to set iterative translation based on iterative time
           body1.translate(0,translate1);      //do translation
@@ -126,14 +128,23 @@ class FreeBody {
           //force1 = body1.pressForce(flow.p);body1.react(force1, dto, dt); //FREE HEAVE
         }
         else if(limit_broken1==true){
-          println("BBBBBBBBBBBBBB");
-          t1=t1+dt;                           //iterate time according to the flow
-          translate1=hold_vel1+a1*t1;         //suvat to find translation depending on acceleration and time
-          body1.translate(0,translate1);      //do the translation
-          body1.rotate(spin1);                //do the rotation based on constant spin
+          if((body1.dxc.y/hold_vel1)<0){
+            println("REACT REACT REACT REACT REACT");
+            force1 = body1.pressForce(flow.p);
+            moment1 = body1.pressMoment(flow.p);
+            body1.react(force1, 0, dto, dt); //FREE PITCH AND HEAVE
+            body1.rotate(spin1);
+          }
+          else{
+            println("BBBBBBBBBBBBBB");
+            t1=t1+dt;                           //iterate time according to the flow
+            translate1=hold_vel1+a1*t1;         //suvat to find translation depending on acceleration and time
+            body1.translate(0,translate1);      //do the translation
+            body1.rotate(spin1);                //do the rotation based on constant spin
           //force1 = body1.pressForce(flow.p);body1.react(force1, dto, dt); //FREE HEAVE
         }
       }
+    }
 /*    else{
         println("CCCCCCCCCCCCCCC");
         force1 = body1.pressForce(flow.p);body1.react(force1, dto, dt); //FREE HEAVE
@@ -141,7 +152,9 @@ class FreeBody {
       }
   }
 */  else{//if not in limits
-      if(limit_broken1==true){//if first iteration out of limits
+      limit_broken1=false;
+      println("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFUUUUUUUUUUUUUUUUU");
+/*      if(limit_broken1==true){//if first iteration out of limits
         println("OUT ITER 1. OUT ITER 1.");
         body1.translate(0,translate1);
         //moment1 = body1.pressMoment(flow.p);body1.react(force1, moment1, dto, dt);
@@ -149,20 +162,25 @@ class FreeBody {
         limit_broken1=false;
       }
       else if(limit_broken1==false){//if not first iteration out of limits
-/*      if(pitch1>PI/5){//max pitch
+*/      if(PITCH(test.body1)>PI/6){//max pitch
+          println("CCCCCCCCCCCCCCCCCCCCCCCKKKKKKKKKKKKKKKKKKKKKKKKK");
           //body1.rotate(limit_spin);                                        //ROTATE INWARDS
-          force1 = body1.pressForce(flow.p);body1.react(force1, 0.001, dto, dt); //FREE HEAVE
+          force1 = body1.pressForce(flow.p);body1.react(force1, 0, dto, dt); //FREE HEAVE
+          body1.rotate(0);
         }
-        else if(pitch1<-PI/5){//min pitch
+        else if(PITCH(test.body1)<-PI/6){//min pitch
+          println("CCCCCCCCCCCCCCCCCCCCCCCCKKKKKKKKKKKKKKKKKKKKKKKKK");
           //body1.rotate(-limit_spin);                                       //ROTATE INWARDS
-          force1 = body1.pressForce(flow.p);body1.react(force1, 0.001, dto, dt); //FREE HEAVE
+          force1 = body1.pressForce(flow.p);body1.react(force1, 0, dto, dt); //FREE HEAVE
+          body1.rotate(0);
         }
         else{//purely free movement
-*/        force1 = body1.pressForce(flow.p);moment1 = body1.pressMoment(flow.p);body1.react(force1, moment1, dto, dt); //FREE PITCH AND HEAVE
+          force1 = body1.pressForce(flow.p);moment1 = body1.pressMoment(flow.p);body1.react(force1, moment1, dto, dt); //FREE PITCH AND HEAVE
           println("force: "+force1.y);println("moment: "+moment1);
           float AOA0 = PITCH(test.body1);
           println("ANGULAR ACCELERATION = "+(PITCH(test.body1)-AOA0)/dt);
-      }
+        }
+    //}
     }
   }
 /*  
