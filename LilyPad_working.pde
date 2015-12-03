@@ -1,6 +1,21 @@
 import hypermedia.net.*;
 import java.nio.*;
 
+String HOST_IP = "234.5.6.7";//This IP (host)
+
+UDP udpA;//LabView
+String TARGET_IP_Lab = "234.0.0.1";//Simulink IP Target
+int PORT_RX_Lab = 58432;//This LabView Port
+int PORT_TARGET_Lab = 58431;//Labview Target Port
+double datasend_Lab1=10, datasend_Lab2=5;
+
+UDP udpB;//Simulink
+String TARGET_IP_Sim = "127.0.0.1";//Simulink IP Target
+int PORT_RX_Sim = 40005;//This Simulink Port
+int PORT_TARGET_Sim = 50005;//Simulink Target Port
+double datasend_Sim=10;
+double Sim_Response;
+
 FreeBody test;
 int resolution = (int)pow(2,5);   // number of grid points spanning radius of vortex
 int xLengths = 10;                // (streamwise length of computational domain)/(resolution)
@@ -10,20 +25,6 @@ int Re = 242718;                  // Reynolds number from Excel
 //float St = 0.2;
 float mr = 1;  // mass ratio = (body mass)/(mass of displaced fluid)
 
-String HOST_IP = "234.5.6.7";//This IP (host)
-UDP udpA;//LabView
-String TARGET_IP_Lab = "234.0.0.1";//Simulink IP Target
-int PORT_RX_A = 58432;//This LabView Port
-int PORT_TARGET_A = 58431;//Labview Target Port
-double data_a1=10, data_a2=5;
-
-UDP udpB;//Simulink
-String TARGET_IP_Sim = "127.0.0.1";//Simulink IP Target
-int PORT_RX_B = 40000;//This Simulink Port
-int PORT_TARGET_B = 40001;//Simulink Target Port
-double data_b;
-double sim_response;
-
 void settings(){
   size(zoom*xLengths*resolution, zoom*yLengths*resolution); //display window size (used to be size(600,600); in setup. Setup only takes integers, not variables).
 }
@@ -32,20 +33,20 @@ void setup() {
   test.body1.rotate(PI/8);test.body1.updatePositionOnly();
   test.body2.rotate(-PI/8);test.body2.updatePositionOnly();
   //LabView
-  udpA = new UDP(this, PORT_RX_A, HOST_IP);
+  udpA = new UDP(this, PORT_RX_Lab, HOST_IP);
   udpA.log(true);
   //Simulink
-  udpB = new UDP(this, PORT_RX_B, HOST_IP);
+  udpB = new UDP(this, PORT_RX_Sim, HOST_IP);
   udpB.log(true);
   udpB.listen(true);
 }
 void receive(byte[] data){
-  sim_response = (float)getFloat64(data);
+  Sim_Response = (float)getFloat64(data);
 }
 void draw() {
-  udpA.send(""+test.realTime()+","+test.PITCH(test.body1)+"",TARGET_IP_Lab,PORT_TARGET_A);
-  udpB.send(""+data_b+"",TARGET_IP_Sim,PORT_TARGET_B);
-  println(sim_response);
+  udpA.send(""+Sim_Response+","+test.PITCH(test.body1)+"",TARGET_IP_Lab,PORT_TARGET_Lab);
+  udpB.send(""+datasend_Sim+"",TARGET_IP_Sim,PORT_TARGET_Sim);
+  println("SIM RESPONSE = "+Sim_Response);
   test.update();
   test.display();
   //test.control2();
@@ -69,9 +70,9 @@ double getFloat64(byte[] bytes){ //MODIFIED http://stackoverflow.com/questions/2
 }
 
 /*UDP;declarations()
-int PORT_RX_A = 58432;//This port
+int PORT_RX_Lab = 58432;//This port
 int PORT_OUT_A = 58431;//Target port (sending data)
-int PORT_RX_B = 40000;
+int PORT_RX_Sim = 40000;
 int PORT_OUT_B = 40001;
 String HOST_IP = "234.5.6.7";//This IP (host)
 String TARGET_IP = "234.5.6.7";//This IP (target)
@@ -95,11 +96,11 @@ SaveData saveMoment_1;
   saveMoment_1 = new SaveData("saveMoment_1.txt", test.body1.coords,resolution,xLengths,yLengths,zoom);
 */
 /*UDP
-  udpA = new UDP(this, PORT_RX_A, HOST_IP);
+  udpA = new UDP(this, PORT_RX_Lab, HOST_IP);
   udpA.log(true);
   //udpA.listen(true);
   
-  udpB = new UDP(this, PORT_RX_B, HOST_IP);
+  udpB = new UDP(this, PORT_RX_Sim, HOST_IP);
   udpB.log(true);
   //udpB.listen(true);
 */
