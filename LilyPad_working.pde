@@ -1,19 +1,6 @@
 import hypermedia.net.*;
 import java.nio.*;
 
-String HOST_IP = "234.5.6.7";//This IP (host)
-UDP udpA;//LabView
-String TARGET_IP_Lab = "234.0.0.1";//Simulink IP Target
-int PORT_RX_A = 58432;//This LabView Port
-int PORT_TARGET_A = 58431;//Labview Target Port
-double data_a1=10, data_a2=5;
-UDP udpB;//Simulink
-String TARGET_IP_Sim = "127.0.0.1";//Simulink IP Target
-int PORT_RX_B = 40000;//This Simulink Port
-int PORT_TARGET_B = 40001;//Simulink Target Port
-double data_b;
-double sim_response;
-
 FreeBody test;
 int resolution = (int)pow(2,5);   // number of grid points spanning radius of vortex
 int xLengths = 10;                // (streamwise length of computational domain)/(resolution)
@@ -21,7 +8,21 @@ int yLengths = 6;                 // (transverse length of computational domain)
 int zoom=3;
 int Re = 242718;                  // Reynolds number from Excel
 //float St = 0.2;
-float mr = 1;                     // mass ratio = (body mass)/(mass of displaced fluid)
+float mr = 1;  // mass ratio = (body mass)/(mass of displaced fluid)
+
+String HOST_IP = "234.5.6.7";//This IP (host)
+UDP udpA;//LabView
+String TARGET_IP_Lab = "234.0.0.1";//Simulink IP Target
+int PORT_RX_A = 58432;//This LabView Port
+int PORT_TARGET_A = 58431;//Labview Target Port
+double data_a1=10, data_a2=5;
+
+UDP udpB;//Simulink
+String TARGET_IP_Sim = "127.0.0.1";//Simulink IP Target
+int PORT_RX_B = 40000;//This Simulink Port
+int PORT_TARGET_B = 40001;//Simulink Target Port
+double data_b;
+double sim_response;
 
 void settings(){
   size(zoom*xLengths*resolution, zoom*yLengths*resolution); //display window size (used to be size(600,600); in setup. Setup only takes integers, not variables).
@@ -42,7 +43,7 @@ void receive(byte[] data){
   sim_response = (float)getFloat64(data);
 }
 void draw() {
-  udpA.send(""+data_a1+","+data_a2+"",TARGET_IP_Lab,PORT_TARGET_A);
+  udpA.send(""+test.realTime()+","+test.PITCH(test.body1)+"",TARGET_IP_Lab,PORT_TARGET_A);
   udpB.send(""+data_b+"",TARGET_IP_Sim,PORT_TARGET_B);
   println(sim_response);
   test.update();
@@ -50,6 +51,8 @@ void draw() {
   //test.control2();
   test.control1();
   //test.testcase();
+  println("REAL TIME = "+test.realTime());
+  println("REAL FORCE = "+test.realForce(test.body1.pressForce(test.flow.p).y));
 }
 void keyPressed(){exit();}
 

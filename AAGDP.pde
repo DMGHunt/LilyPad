@@ -63,11 +63,23 @@ class FreeBody {
     plot.setLegend("Vorticity",-0.5,0.5);   
   }
 /*----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+  float realTime = 0;
+  float realTime(){
+    realTime=t*0.28/chord;
+    return realTime;
+  }
+  float realForce;
+  float realForce(float force_component){
+    realForce = force_component*1000*0.28/chord;
+    return realForce;
+  }
   void update() {
     dto = dt;t+=dt;
     if (QUICK) {dt = flow.checkCFL();flow.dt = dt;}
     union.update();flow.update(union);
     if (order2) {flow.update2();}
+    //real_time=t*0.28/resolution;
+    //println(real_time);
   }
   float ts=0;
   void testcase(){
@@ -83,7 +95,6 @@ class FreeBody {
       body1.react(force1, moment1, dto, dt); 
     }
   }
-  
   float PITCH(ReactNACA foil){
     PVector LEdge = foil.coords.get(0); //Leading Edge coords
     PVector TEdge = foil.coords.get(100); //Trailing Edge coords
